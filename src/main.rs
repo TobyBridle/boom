@@ -2,8 +2,8 @@ use std::{io, time::Instant};
 
 use boom::parse_bangs;
 use cache::init_list;
-use ntex::web::{self};
-use routes::index::redirector;
+use ntex::web;
+use routes::{bangs::list_bangs, index::redirector};
 use tracing::{Level, error, info};
 pub mod boom;
 pub mod cache;
@@ -42,6 +42,7 @@ async fn main() -> std::io::Result<()> {
     init_list(bangs, false).ok();
 
     info!(name:"Boom", "Starting Web Server on {}:{}", ADDR, PORT);
+    web::HttpServer::new(|| web::App::new().service(redirector).service(list_bangs))
         .bind((ADDR, PORT))?
         .run()
         .await
