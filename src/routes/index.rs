@@ -11,7 +11,9 @@ use crate::cache::{DEFAULT_QUERY, REDIRECT_LIST, get_bang, insert_bang};
 #[web::get("/")]
 pub async fn redirector(r: HttpRequest) -> Option<web::HttpResponse> {
     let now = Instant::now();
-    let query = urlencoding::decode(r.query_string()).ok()?.into_owned();
+    let mut query = urlencoding::decode(r.query_string()).ok()?.into_owned();
+    query.make_ascii_lowercase();
+
     let res = if query.is_empty() || query.len() < 4 {
         web::HttpResponse::BadRequest()
             .content_type("text/html")
