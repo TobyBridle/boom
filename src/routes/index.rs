@@ -11,8 +11,7 @@ use crate::cache::{DEFAULT_QUERY, REDIRECT_LIST, get_bang, insert_bang};
 #[web::get("/")]
 pub async fn redirector(r: HttpRequest) -> Option<web::HttpResponse> {
     let now = Instant::now();
-    let mut query = urlencoding::decode(r.query_string()).ok()?.into_owned();
-    query.make_ascii_lowercase();
+    let query = urlencoding::decode(r.query_string()).ok()?.into_owned();
 
     let res = if query.is_empty() || query.len() < 4 {
         web::HttpResponse::BadRequest()
@@ -32,7 +31,7 @@ pub async fn redirector(r: HttpRequest) -> Option<web::HttpResponse> {
             }
         }
 
-        let bang = &query[start..end];
+        let bang = &query[start..end].to_ascii_lowercase();
         if end == start {
             info!("Quitting eatly.");
             return Some(
@@ -60,7 +59,7 @@ pub async fn redirector(r: HttpRequest) -> Option<web::HttpResponse> {
                 let redirect = rlock
                     .iter()
                     .enumerate()
-                    .find(|(_, redirect)| redirect.trigger == bang)?;
+                    .find(|(_, redirect)| redirect.trigger == *bang)?;
                 info!(
                     "Inserting {bang} into the cache and calculating indexes. URL Index: {}",
                     redirect.0
