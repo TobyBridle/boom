@@ -1,10 +1,10 @@
-use std::time::Instant;
+use std::{io, time::Instant};
 
 use boom::parse_bangs;
 use cache::init_list;
 use ntex::web::{self};
 use routes::index::redirector;
-use tracing::{Level, debug, error};
+use tracing::{Level, error, info};
 pub mod boom;
 pub mod cache;
 pub mod routes;
@@ -15,19 +15,25 @@ const PORT: u16 = 3000;
 #[ntex::main]
 async fn main() -> std::io::Result<()> {
     tracing_subscriber::fmt()
-        .with_max_level(Level::DEBUG)
+        .with_max_level(if cfg!(debug_assertions) {
+            Level::DEBUG
+        } else {
+            Level::INFO
+        })
         .with_ansi(true)
         .compact()
+        .with_writer(io::stderr)
         .init();
 
-    debug!("Parsing Bangs!");
+    info!(name: "Boom", "Parsing Bangs!");
     let now = Instant::now();
     let bangs = parse_bangs(None)
         .map_err(|e| {
             error!("Could not parse bangs! {:?}", e);
         })
         .unwrap();
-    debug!(
+    info!(
+        name: "Boom",
         "Parsed {} bangs in {:?}!",
         bangs.len(),
         Instant::now().duration_since(now)
@@ -35,8 +41,7 @@ async fn main() -> std::io::Result<()> {
 
     init_list(bangs, false).ok();
 
-    debug!("Starting Web Server on {}:{}", ADDR, PORT);
-    web::HttpServer::new(|| web::App::new().service(redirector))
+    info!(name:"Boom", "Starting Web Server on {}:{}", ADDR, PORT);
         .bind((ADDR, PORT))?
         .run()
         .await
