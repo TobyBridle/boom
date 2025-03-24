@@ -12,6 +12,9 @@ pub mod routes;
 const ADDR: &str = "127.0.0.1";
 const PORT: u16 = 3000;
 
+#[macro_use(concat_string)]
+extern crate concat_string;
+
 #[ntex::main]
 async fn main() -> std::io::Result<()> {
     tracing_subscriber::fmt()
