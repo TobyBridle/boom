@@ -17,7 +17,7 @@ pub async fn list_bangs() -> web::HttpResponse {
     let last_update = LAST_HTML_UPDATE
         .try_read()
         .ok()
-        .and_then(|opt| opt.clone())
+        .and_then(|opt| *opt)
         .unwrap_or_else(|| {
             Instant::now()
                 .checked_sub(Duration::from_secs(301))
