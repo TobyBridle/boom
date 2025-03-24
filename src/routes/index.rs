@@ -83,7 +83,7 @@ pub async fn redirector(r: HttpRequest) -> Option<web::HttpResponse> {
         };
         drop(rlock);
 
-        info!("Redirecting. Took {:?}", Instant::now().duration_since(now));
+        info!("Redirecting. Took {:?}", now.elapsed());
         web::HttpResponse::PermanentRedirect()
             .header(header::LOCATION, redirect)
             .finish()

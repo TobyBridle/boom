@@ -26,7 +26,7 @@ pub async fn list_bangs() -> web::HttpResponse {
 
     let mut buffer = String::with_capacity(1024);
 
-    if Instant::now().duration_since(last_update).as_secs() > 300 {
+    if last_update.elapsed().as_secs() > 300 {
         info!(name: "Boom", "Updating /bangs");
         if let Ok(lock) = REDIRECT_LIST.try_read() {
             lock.iter().for_each(|redirection| {
