@@ -8,26 +8,31 @@ use std::time::Instant;
 
 #[inline(always)]
 fn iterative_retrieve_bang(str: &str, offset: Option<usize>) -> Option<(usize, usize)> {
-    if let Some((start_index, _)) = &str.chars().enumerate().find(|(i, c)| {
-        *c == '!'
-            && str
-                .chars()
-                .nth(if *i > 1 { *i - 1 } else { str.len() })
-                .unwrap_or(' ')
-                == ' '
-    }) {
-        if let Some((end_index, _)) = &str
-            .char_indices()
-            .skip(start_index - offset.unwrap_or(0))
-            .find(|(_, c)| *c == ' ')
-        {
-            Some((*start_index, *end_index)) // Return the index after the space
-        } else {
-            Some((*start_index, str.len())) // Return the index after the last char
+    let bytes = str.as_bytes();
+    let len = bytes.len();
+    let offset = offset.unwrap_or(0);
+    let chunk_size = 16; // Adjustable for tuning performance
+
+    let mut i = 0;
+    while i < len {
+        let end = std::cmp::min(i + chunk_size, len);
+        let chunk = &bytes[i..end];
+
+        for (j, &b) in chunk.iter().enumerate() {
+            let base_idx = i + j + offset; // Adjust base index with offset
+            if b == b'!' && (j == 0 || chunk.get(j - 1) == Some(&b' ')) {
+                let start = base_idx;
+                let mut end = start;
+                while end < len && bytes[end] != b' ' {
+                    end += 1;
+                }
+                return Some((start, end));
+            }
         }
-    } else {
-        None
+        i += chunk_size;
     }
+
+    None
 }
 
 #[inline(always)]
