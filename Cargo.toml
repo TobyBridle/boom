@@ -13,6 +13,10 @@ divan = "0.1.17"
 name = "test_bang"
 harness = false
 
+[[bench]]
+name = "test_template"
+harness = false
+
 [dependencies]
 allocation-counter = "0.8.1"
 concat-string = "1.0.1"

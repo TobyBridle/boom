@@ -1,4 +1,6 @@
 pub mod parse_bangs;
+pub mod parse_templates;
+
 use serde::Deserialize;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
