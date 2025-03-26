@@ -3,7 +3,11 @@ name = "boom"
 version = "0.1.1"
 edition = "2024"
 
+[features]
+measure-allocs = []
+
 [dependencies]
+allocation-counter = "0.8.1"
 concat-string = "1.0.1"
 ntex = { version = "2.12.3", features = ["tokio"] }
 serde = { version = "1.0.219", features = ["serde_derive"] }
@@ -13,7 +17,6 @@ tracing-subscriber = { version = "0.3.19", features = ["ansi"] }
 urlencoding = "2.1.3"
 
 [profile.release]
-lto = "fat"
-codegen-units = 1
-debug = 1
+# lto = "fat"
+# codegen-units = 1
 opt-level = 3

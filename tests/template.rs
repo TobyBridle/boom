@@ -192,4 +192,40 @@ fn test_template_infix_multiple() {
         timer.elapsed()
     );
     assert_eq!(indices, Some(vec![(30, 37), (78, 85)]));
+#[cfg(feature = "measure-allocs")]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_empty_template_memory() {
+        let alloc = allocation_counter::measure(|| {
+            test_empty_template();
+        });
+        eprintln!(
+            "`test_empty_template` used a max of {} bytes and {} bytes over its lifetime",
+            alloc.bytes_max, alloc.bytes_total
+        )
+    }
+
+    #[test]
+    fn test_template_infix_long_memory() {
+        let alloc = allocation_counter::measure(|| {
+            test_template_infix_long();
+        });
+        eprintln!(
+            "`test_template_infix_long` used a max of {} bytes and {} bytes over its lifetime",
+            alloc.bytes_max, alloc.bytes_total
+        )
+    }
+
+    #[test]
+    fn test_template_suffix_long_memory() {
+        let alloc = allocation_counter::measure(|| {
+            test_template_suffix_long();
+        });
+        eprintln!(
+            "`test_template_suffix_long` used a max of {} bytes and {} bytes over its lifetime",
+            alloc.bytes_max, alloc.bytes_total
+        )
+    }
 }

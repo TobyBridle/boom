@@ -27,6 +27,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "allocation-counter"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "beb9e990c0a33699f1984d85a6abead615ccc72dd8130bf3e15dcabe2ca149c9"
+
+[[package]]
 name = "async-broadcast"
 version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -96,6 +102,7 @@ dependencies = [
 name = "boom"
 version = "0.1.1"
 dependencies = [
+ "allocation-counter",
  "concat-string",
  "ntex",
  "serde",
