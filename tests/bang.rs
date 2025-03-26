@@ -148,3 +148,52 @@ fn test_bang_retrieval_infix() {
     );
     assert_eq!(indices, Some((19, 21)))
 }
+
+#[cfg(feature = "measure-allocs")]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_bang_retrieval_none_memory() {
+        let alloc = allocation_counter::measure(|| {
+            test_bang_retrieval_none();
+        });
+        eprintln!(
+            "`test_bang_retrieval_none` used a max of {} bytes and {} bytes over its lifetime",
+            alloc.bytes_max, alloc.bytes_total
+        )
+    }
+
+    #[test]
+    fn test_bang_retrieval_prefix_memory() {
+        let alloc = allocation_counter::measure(|| {
+            test_bang_retrieval_prefix();
+        });
+        eprintln!(
+            "`test_bang_retrieval_prefix` used a max of {} bytes and {} bytes over its lifetime",
+            alloc.bytes_max, alloc.bytes_total
+        )
+    }
+
+    #[test]
+    fn test_bang_retrieval_infix_memory() {
+        let alloc = allocation_counter::measure(|| {
+            test_bang_retrieval_infix();
+        });
+        eprintln!(
+            "`test_bang_retrieval_infix` used a max of {} bytes and {} bytes over its lifetime",
+            alloc.bytes_max, alloc.bytes_total
+        )
+    }
+
+    #[test]
+    fn test_bang_retrieval_suffix_long_memory() {
+        let alloc = allocation_counter::measure(|| {
+            test_bang_retrieval_suffix();
+        });
+        eprintln!(
+            "`test_bang_retrieval_suffix_long` used a max of {} bytes and {} bytes over its lifetime",
+            alloc.bytes_max, alloc.bytes_total
+        )
+    }
+}
