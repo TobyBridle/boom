@@ -14,6 +14,14 @@ fn iterative_retrieve_bang(str: &str, offset: Option<usize>) -> Option<(usize, u
     let chunk_size = 16; // Adjustable for tuning performance
 
     let mut i = 0;
+
+    // Check for a bang at the start (ignoring empty bangs like "! ")
+    if bytes[0] == b'!' && bytes.get(1) != Some(&b' ') {
+        if let Some(end) = bytes.iter().position(|c| *c == b' ') {
+            return Some((0, end));
+        }
+    }
+
     while i < len {
         let end = std::cmp::min(i + chunk_size, len);
         let chunk = &bytes[i..end];
@@ -21,12 +29,15 @@ fn iterative_retrieve_bang(str: &str, offset: Option<usize>) -> Option<(usize, u
         for (j, &b) in chunk.iter().enumerate() {
             let base_idx = i + j + offset; // Adjust base index with offset
             if b == b'!' && (j == 0 || chunk.get(j - 1) == Some(&b' ')) {
-                let start = base_idx;
-                let mut end = start;
-                while end < len && bytes[end] != b' ' {
-                    end += 1;
+                // Ensure there are characters after '!'
+                if j + 1 < chunk.len() && chunk[j + 1] != b' ' {
+                    let start = base_idx;
+                    let mut end = start;
+                    while end < len && bytes[end] != b' ' {
+                        end += 1;
+                    }
+                    return Some((start, end));
                 }
-                return Some((start, end));
             }
         }
         i += chunk_size;
@@ -152,6 +163,42 @@ fn test_bang_retrieval_infix() {
         timer.elapsed()
     );
     assert_eq!(indices, Some((19, 21)))
+}
+
+#[test]
+fn test_bang_invalid_proceeding_space() {
+    let infix = "test! ";
+    let timer = Instant::now();
+    let indices = retrieve_bang(infix);
+    eprintln!(
+        "Took {:?} to retrieve the bang indices. (INVALID PROCEEDING SPACE)",
+        timer.elapsed()
+    );
+    assert_eq!(indices, None)
+}
+
+#[test]
+fn test_bang_invalid_preceeding_space() {
+    let infix = "test! !gh";
+    let timer = Instant::now();
+    let indices = retrieve_bang(infix);
+    eprintln!(
+        "Took {:?} to retrieve the bang indices. (INVALID PRECEEDING SPACE)",
+        timer.elapsed()
+    );
+    assert_eq!(indices, Some((6, infix.len())))
+}
+
+#[test]
+fn test_bang_invalid_single_char() {
+    let infix = "! test !gh";
+    let timer = Instant::now();
+    let indices = retrieve_bang(infix);
+    eprintln!(
+        "Took {:?} to retrieve the bang indices. (INVALID SINGLE CHAR)",
+        timer.elapsed()
+    );
+    assert_eq!(indices, Some((7, infix.len())))
 }
 
 #[cfg(feature = "measure-allocs")]
