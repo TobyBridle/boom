@@ -6,6 +6,13 @@ edition = "2024"
 [features]
 measure-allocs = []
 
+[dev-dependencies]
+divan = "0.1.17"
+
+[[bench]]
+name = "test_bang"
+harness = false
+
 [dependencies]
 allocation-counter = "0.8.1"
 concat-string = "1.0.1"

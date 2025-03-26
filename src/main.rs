@@ -1,6 +1,6 @@
 use std::{io, time::Instant};
 
-use boom::parse_bangs;
+use boom::parse_bangs::parse_bang_file;
 use cache::init_list;
 use ntex::web;
 use routes::{bangs::list_bangs, index::redirector};
@@ -30,7 +30,7 @@ async fn main() -> std::io::Result<()> {
 
     info!(name: "Boom", "Parsing Bangs!");
     let now = Instant::now();
-    let bangs = parse_bangs(None)
+    let bangs = parse_bang_file(None)
         .map_err(|e| {
             error!("Could not parse bangs! {:?}", e);
         })
