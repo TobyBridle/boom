@@ -1,7 +1,7 @@
 pub mod parse_bangs;
 use serde::Deserialize;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Match {
     /// Inclusive start index of a match
     pub start: usize,
@@ -13,6 +13,10 @@ pub struct Match {
 impl Match {
     pub fn new(start: usize, end: usize) -> Self {
         Match { start, end }
+    }
+
+    pub fn is_empty(self) -> bool {
+        self.start == 0 && self.end == 0
     }
 }
 
