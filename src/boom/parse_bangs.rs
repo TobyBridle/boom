@@ -29,8 +29,9 @@ use std::arch::x86_64::*;
 ///
 /// # Example
 /// ```
+/// use boom::boom::{Redirect, parse_bangs::parse_bang_file};
 /// // Use default bangs file
-/// const vec: Vec<Redirect> = parse_bangs(None)?;
+/// let vec: Vec<Redirect> = parse_bang_file(None).unwrap_or(vec![]);
 /// ```
 pub fn parse_bang_file(
     bang_path: Option<PathBuf>,
