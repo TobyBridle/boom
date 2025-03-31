@@ -1,86 +1,90 @@
-use std::{ops::Index, time::Instant};
-
+use boom::boom::{
+    DEFAULT_SEARCH_INDEXES, DEFAULT_SEARCH_TEMPLATE, parse_bangs::parse_bang_indexes,
+};
 use ntex::{
-    http::header,
+    http::header::LOCATION,
     web::{self, HttpRequest},
 };
-use tracing::info;
-
-use crate::cache::{DEFAULT_QUERY, REDIRECT_LIST, get_bang, insert_bang};
 
 #[web::get("/")]
 pub async fn redirector(r: HttpRequest) -> Option<web::HttpResponse> {
-    let now = Instant::now();
-    let query = urlencoding::decode(r.query_string()).ok()?.into_owned();
+    let query = &urlencoding::decode(r.query_string()).ok()?[2..];
+    let bang_idx = parse_bang_indexes(query).unwrap_or_default();
 
-    let res = if query.is_empty() || query.len() < 4 {
-        web::HttpResponse::BadRequest()
-            .content_type("text/html")
-            .body("<h1>Query was invalid</h1>")
-    } else {
-        let query_len = "?q=".len();
-        let start = query_len;
-        let mut end = query_len;
-
-        if query.chars().nth(start - 1).unwrap_or(' ') == '!' {
-            for (i, ch) in query[start..].char_indices() {
-                if ch == ' ' {
-                    end = start + i;
-                    break;
-                }
-            }
-        }
-
-        let bang = &query[start..end].to_ascii_lowercase();
-        if end == start {
-            info!("Quitting eatly.");
-            return Some(
-                web::HttpResponse::PermanentRedirect()
-                    .header(
-                        header::LOCATION,
-                        DEFAULT_QUERY.replace("{{{s}}}", &query[query_len - 1..]),
-                    )
-                    .finish(),
-            );
-        }
-
-        let rlock = REDIRECT_LIST.try_read().ok()?;
-        let redirect =
-            if let Some((start_index, end_index, template_index)) = get_bang(bang).ok()? {
-                info!("Found {bang} in the cache. URL Index: {template_index}.");
-                let template = rlock.index(template_index).url_template.to_owned();
-
-                concat_string!(
-                    &template[0..start_index],
-                    &query[end..],
-                    &template[end_index..]
+    if bang_idx.is_empty() {
+        return Some(
+            web::HttpResponse::PermanentRedirect()
+                .header(
+                    LOCATION,
+                    concat_string!(
+                        &DEFAULT_SEARCH_TEMPLATE[..DEFAULT_SEARCH_INDEXES.start],
+                        query
+                    ),
                 )
-            } else {
-                let redirect = rlock
-                    .iter()
-                    .enumerate()
-                    .find(|(_, redirect)| redirect.trigger == *bang)?;
-                info!(
-                    "Inserting {bang} into the cache and calculating indexes. URL Index: {}",
-                    redirect.0
-                );
-                let start_index = redirect.1.url_template.find("{{{s}}}")?;
-                let end_index = start_index + "{{{s}}}".len();
-                insert_bang(bang.to_string(), redirect.0, start_index, end_index).ok()?;
-                let template = redirect.1.url_template.to_owned();
-                concat_string!(
-                    &template[0..start_index],
-                    urlencoding::encode(&query[end..]),
-                    &template[end_index..]
-                )
-            };
-        drop(rlock);
+                .finish(),
+        );
+    }
 
-        info!("Redirecting. Took {:?}", now.elapsed());
-        web::HttpResponse::PermanentRedirect()
-            .header(header::LOCATION, redirect)
-            .finish()
-    };
+    None
+    // let res = if query.is_empty() || query.len() < 4 {
+    //     web::HttpResponse::BadRequest()
+    //         .content_type("text/html")
+    //         .body("<h1>Query was invalid</h1>")
+    // } else {
+    //     let query_len = "?q=".len() - 1;
+    //     let bmatch = parse_bang_indexes(&query).unwrap_or_default();
+    //
+    //     let bang = &query[bmatch.to_indices(query_len)].to_ascii_lowercase();
+    //     info!("Bang was {bang}. Match {bmatch:?}");
+    //
+    //     if bmatch.is_empty() {
+    //         info!("Quitting eatly.");
+    //         return Some(
+    //             web::HttpResponse::PermanentRedirect()
+    //                 .header(
+    //                     header::LOCATION,
+    //                     DEFAULT_QUERY.replace("{{{s}}}", &query[query_len - 1..]),
+    //                 )
+    //                 .finish(),
+    //         );
+    //     }
+    //
+    //     let rlock = REDIRECT_LIST.try_read().ok()?;
+    //     let redirect =
+    //         if let Some((start_index, end_index, template_index)) = get_bang(bang).ok()? {
+    //             info!("Found {bang} in the cache. URL Index: {template_index}.");
+    //             let template = rlock.index(template_index).url_template.to_owned();
+    //
+    //             concat_string!(
+    //                 &template[0..start_index],
+    //                 &query[bmatch.end..],
+    //                 &template[end_index..]
+    //             )
+    //         } else {
+    //             let redirect = rlock
+    //                 .iter()
+    //                 .enumerate()
+    //                 .find(|(_, redirect)| redirect.trigger == *bang)?;
+    //             info!(
+    //                 "Inserting {bang} into the cache and calculating indexes. URL Index: {}",
+    //                 redirect.0
+    //             );
+    //             let tmatch = parse_template_indexes(&redirect.1.url_template).unwrap_or_default();
+    //             insert_bang(bang.to_string(), redirect.0, tmatch[0].start, tmatch[0].end).ok()?;
+    //             let template = redirect.1.url_template.to_owned();
+    //             concat_string!(
+    //                 &template[0..tmatch[0].start],
+    //                 urlencoding::encode(&query[bmatch.end..]),
+    //                 &template[tmatch[0].end..]
+    //             )
+    //         };
+    //     drop(rlock);
+    //
+    //     info!("Redirecting. Took {:?}", now.elapsed());
+    //     web::HttpResponse::PermanentRedirect()
+    //         .header(header::LOCATION, redirect)
+    //         .finish()
+    // };
 
-    Some(res)
+    // Some(res)
 }

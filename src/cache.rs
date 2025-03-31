@@ -9,7 +9,6 @@ static CACHE: LazyLock<RwLock<HashMap<String, CompiledBang>>> =
     LazyLock::new(|| RwLock::new(HashMap::with_capacity(128)));
 
 pub static REDIRECT_LIST: LazyLock<RwLock<Vec<Redirect>>> = LazyLock::new(|| RwLock::new(vec![]));
-pub static DEFAULT_QUERY: &str = "https://google.com/search?q={{{s}}}";
 
 /// start index, end index, template index
 pub type CompiledBang = (usize, usize, usize);

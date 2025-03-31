@@ -1,12 +1,15 @@
 use std::{io, time::Instant};
 
-use boom::parse_bangs::parse_bang_file;
+use boom::{DEFAULT_SEARCH_TEMPLATE, Match, parse_bangs::parse_bang_file, resolver::resolve};
 use cache::init_list;
+use clap::Parser;
+use cli::LaunchType;
 use ntex::web;
 use routes::{bangs::list_bangs, index::redirector};
 use tracing::{Level, error, info};
 pub mod boom;
 pub mod cache;
+pub mod cli;
 pub mod routes;
 
 const ADDR: &str = "127.0.0.1";
@@ -28,6 +31,8 @@ async fn main() -> std::io::Result<()> {
         .with_writer(io::stderr)
         .init();
 
+    let args = cli::Args::parse();
+
     info!(name: "Boom", "Parsing Bangs!");
     let now = Instant::now();
     let bangs = parse_bang_file(None)
@@ -44,7 +49,21 @@ async fn main() -> std::io::Result<()> {
 
     init_list(bangs, false).ok();
 
+    match args.launch {
+        LaunchType::Serve => {
+            serve().await.unwrap();
+        }
+        LaunchType::Resolve { search_query } => {
+            resolve(search_query.as_str()).await;
+        }
+    }
+
+    Ok(())
+}
+
+pub async fn serve() -> Result<(), std::io::Error> {
     info!(name:"Boom", "Starting Web Server on {}:{}", ADDR, PORT);
+
     web::HttpServer::new(|| web::App::new().service(redirector).service(list_bangs))
         .bind((ADDR, PORT))?
         .run()

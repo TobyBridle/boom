@@ -1,9 +1,16 @@
 pub mod parse_bangs;
 pub mod parse_templates;
+pub mod resolver;
+
+use std::{cmp::max, ops::Range};
 
 use serde::Deserialize;
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub static DEFAULT_SEARCH_TEMPLATE: &str = "https://google.com/search?q={{{s}}}";
+pub static DEFAULT_SEARCH_INDEXES: std::sync::LazyLock<Match> =
+    std::sync::LazyLock::new(|| Match::new(28, DEFAULT_SEARCH_TEMPLATE.len()));
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct Match {
     /// Inclusive start index of a match
     pub start: usize,
@@ -13,12 +20,19 @@ pub struct Match {
 }
 
 impl Match {
+    #[inline(always)]
     pub fn new(start: usize, end: usize) -> Self {
         Match { start, end }
     }
 
+    #[inline(always)]
     pub fn is_empty(self) -> bool {
         self.start == 0 && self.end == 0
+    }
+
+    #[inline(always)]
+    pub fn to_indices(self, offset: usize) -> Range<usize> {
+        (max(self.start, offset) - offset)..(max(self.end, offset + 1) - offset)
     }
 }
 

@@ -2,10 +2,10 @@ use std::{env, fs::File, path::PathBuf};
 
 use super::{Match, Redirect};
 
-// #[cfg(all(
-//     any(target_arch = "x86", target_arch = "x86_64"),
-//     target_feature = "avx2"
-// ))]
+#[cfg(all(
+    any(target_arch = "x86", target_arch = "x86_64"),
+    target_feature = "avx2"
+))]
 use std::arch::x86_64::*;
 
 /// Parses bangs from using a path to a JSON file OR `./default_bangs.json`
@@ -75,7 +75,7 @@ fn parse_bang_indexes_iter(bang: &str) -> Option<Match> {
 }
 
 #[inline(always)]
-pub unsafe fn parse_bang_indexes(bang: &str) -> Option<Match> {
+pub fn parse_bang_indexes(bang: &str) -> Option<Match> {
     #[cfg(all(
         any(target_arch = "x86", target_arch = "x86_64"),
         target_feature = "avx2"
