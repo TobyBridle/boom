@@ -36,7 +36,7 @@ impl Match {
     }
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct Redirect {
     /// The short name or abbreviation of the bang command.
     #[serde(rename = "s")]

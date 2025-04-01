@@ -5,13 +5,10 @@ use std::{
 
 use crate::boom::Redirect;
 
-static CACHE: LazyLock<RwLock<HashMap<String, CompiledBang>>> =
+pub static CACHE: LazyLock<RwLock<HashMap<String, usize>>> =
     LazyLock::new(|| RwLock::new(HashMap::with_capacity(128)));
 
 pub static REDIRECT_LIST: LazyLock<RwLock<Vec<Redirect>>> = LazyLock::new(|| RwLock::new(vec![]));
-
-/// start index, end index, template index
-pub type CompiledBang = (usize, usize, usize);
 
 /// Initialises the list of redirects, unless specified otherwise using `overwrite`.
 ///
@@ -29,7 +26,7 @@ pub fn init_list(
     overwrite: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
     {
-        if REDIRECT_LIST.try_read()?.len() != 0 && !overwrite {
+        if !REDIRECT_LIST.try_read()?.is_empty() && !overwrite {
             return Err("List already initialised".into());
         };
     }
@@ -50,15 +47,8 @@ pub fn init_list(
 /// let z: usize = get_index("yt");
 /// insert_bang("yt".to_string(), x, y, z).ok()?;
 /// ```
-pub fn insert_bang(
-    bang: String,
-    template_index: usize,
-    start_index: usize,
-    end_index: usize,
-) -> Result<(), Box<dyn std::error::Error>> {
-    CACHE
-        .try_write()?
-        .insert(bang, (start_index, end_index, template_index));
+pub fn insert_bang(bang: String, template_index: usize) -> Result<(), Box<dyn std::error::Error>> {
+    CACHE.try_write()?.insert(bang, template_index);
     Ok(())
 }
 
@@ -71,6 +61,6 @@ pub fn insert_bang(
 /// ```
 /// let does_bang_exist = get_bang("yt")?.is_some();
 /// ```
-pub fn get_bang(bang: &str) -> Result<Option<CompiledBang>, Box<dyn std::error::Error>> {
+pub fn get_bang(bang: &str) -> Result<Option<usize>, Box<dyn std::error::Error>> {
     Ok(CACHE.try_read()?.get(bang).copied())
 }

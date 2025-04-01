@@ -1,7 +1,7 @@
-use std::{io, time::Instant};
+use std::{collections::HashMap, io, time::Instant};
 
-use boom::{DEFAULT_SEARCH_TEMPLATE, Match, parse_bangs::parse_bang_file, resolver::resolve};
-use cache::init_list;
+use boom::{parse_bangs::parse_bang_file, resolver::resolve};
+use cache::{CACHE, init_list, insert_bang};
 use clap::Parser;
 use cli::LaunchType;
 use ntex::web;
@@ -40,21 +40,25 @@ async fn main() -> std::io::Result<()> {
             error!("Could not parse bangs! {:?}", e);
         })
         .unwrap();
+    let bangs_len = bangs.len();
     info!(
         name: "Boom",
         "Parsed {} bangs in {:?}!",
-        bangs.len(),
+        bangs_len,
         Instant::now().duration_since(now)
     );
 
-    init_list(bangs, false).ok();
+    init_list(bangs.clone(), false).ok();
 
+    bangs.iter().enumerate().for_each(|(idx, bang)| {
+        insert_bang(bang.trigger.clone(), idx).unwrap();
+    });
     match args.launch {
         LaunchType::Serve => {
             serve().await.unwrap();
         }
         LaunchType::Resolve { search_query } => {
-            resolve(search_query.as_str()).await;
+            println!("Resolved: {:?}", resolve(search_query.as_str()));
         }
     }
 

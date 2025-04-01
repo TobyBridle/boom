@@ -17,6 +17,10 @@ harness = false
 name = "test_template"
 harness = false
 
+[[bench]]
+name = "test_resolve"
+harness = false
+
 [dependencies]
 allocation-counter = "0.8.1"
 clap = { version = "4.5.34", features = ["derive"] }
@@ -29,6 +33,6 @@ tracing-subscriber = { version = "0.3.19", features = ["ansi"] }
 urlencoding = "2.1.3"
 
 [profile.release]
-# lto = "fat"
-# codegen-units = 1
-opt-level = 3
+strip = true
+lto = true
+codegen-units = 1
