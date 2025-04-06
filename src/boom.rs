@@ -20,17 +20,20 @@ pub struct Match {
 }
 
 impl Match {
-    #[inline(always)]
-    pub fn new(start: usize, end: usize) -> Self {
-        Match { start, end }
+    #[inline]
+    #[must_use]
+    pub const fn new(start: usize, end: usize) -> Self {
+        Self { start, end }
     }
 
-    #[inline(always)]
-    pub fn is_empty(self) -> bool {
+    #[inline]
+    #[must_use]
+    pub const fn is_empty(self) -> bool {
         self.start == 0 && self.end == 0
     }
 
-    #[inline(always)]
+    #[inline]
+    #[must_use]
     pub fn to_indices(self, offset: usize) -> Range<usize> {
         (max(self.start, offset) - offset)..(max(self.end, offset + 1) - offset)
     }

@@ -6,7 +6,7 @@ use boom::boom::{Match, parse_bangs::parse_bang_indexes};
 fn test_bang_retrieval_none() {
     let str = "youtube";
     let timer = Instant::now();
-    let indices = unsafe { parse_bang_indexes(str) };
+    let indices = parse_bang_indexes(str);
     eprintln!(
         "Took {:?} to retrieve the bang indices. (NONE)",
         timer.elapsed()
@@ -18,7 +18,7 @@ fn test_bang_retrieval_none() {
 fn test_bang_retrieval_prefix() {
     let prefix = "!local youtube";
     let timer = Instant::now();
-    let indices = unsafe { parse_bang_indexes(prefix) };
+    let indices = parse_bang_indexes(prefix);
     eprintln!(
         "Took {:?} to retrieve the bang indices. (PREFIX)",
         timer.elapsed()
@@ -30,7 +30,7 @@ fn test_bang_retrieval_prefix() {
 fn test_bang_retrieval_suffix() {
     let suffix = "youtube !local";
     let timer = Instant::now();
-    let indices = unsafe { parse_bang_indexes(suffix) };
+    let indices = parse_bang_indexes(suffix);
     eprintln!(
         "Took {:?} to retrieve the bang indices. (SUFFIX)",
         timer.elapsed()
@@ -42,7 +42,7 @@ fn test_bang_retrieval_suffix() {
 fn test_bang_retrieval_suffix_long() {
     let suffix = "a long query that i want search lol on youtube !local";
     let timer = Instant::now();
-    let indices = unsafe { parse_bang_indexes(suffix) };
+    let indices = parse_bang_indexes(suffix);
     eprintln!(
         "Took {:?} to retrieve the bang indices. (SUFFIX LONG)",
         timer.elapsed()
@@ -54,7 +54,7 @@ fn test_bang_retrieval_suffix_long() {
 fn test_bang_retrieval_suffix_invalid() {
     let invalid_suffix = "test!gh";
     let timer = Instant::now();
-    let indices = unsafe { parse_bang_indexes(invalid_suffix) };
+    let indices = parse_bang_indexes(invalid_suffix);
     eprintln!(
         "Took {:?} to retrieve the bang indices. (SUFFIX INVALID)",
         timer.elapsed()
@@ -66,7 +66,7 @@ fn test_bang_retrieval_suffix_invalid() {
 fn test_bang_retrieval_suffix_long_invalid() {
     let suffix = "a long query that i want search lol on youtube!local";
     let timer = Instant::now();
-    let indices = unsafe { parse_bang_indexes(suffix) };
+    let indices = parse_bang_indexes(suffix);
     eprintln!(
         "Took {:?} to retrieve the bang indices. (SUFFIX INVALID LONG)",
         timer.elapsed()
@@ -78,7 +78,7 @@ fn test_bang_retrieval_suffix_long_invalid() {
 fn test_bang_retrieval_infix() {
     let infix = "search for this on !g please and !dont let others !work";
     let timer = Instant::now();
-    let indices = unsafe { parse_bang_indexes(infix) };
+    let indices = parse_bang_indexes(infix);
     eprintln!(
         "Took {:?} to retrieve the bang indices. (INFIX)",
         timer.elapsed()
@@ -90,7 +90,7 @@ fn test_bang_retrieval_infix() {
 fn test_bang_invalid_proceeding_space() {
     let infix = "test! ";
     let timer = Instant::now();
-    let indices = unsafe { parse_bang_indexes(infix) };
+    let indices = parse_bang_indexes(infix);
     eprintln!(
         "Took {:?} to retrieve the bang indices. (INVALID PROCEEDING SPACE)",
         timer.elapsed()
@@ -102,7 +102,7 @@ fn test_bang_invalid_proceeding_space() {
 fn test_bang_invalid_preceeding_space() {
     let infix = "test! !gh";
     let timer = Instant::now();
-    let indices = unsafe { parse_bang_indexes(infix) };
+    let indices = parse_bang_indexes(infix);
     eprintln!(
         "Took {:?} to retrieve the bang indices. (INVALID PRECEEDING SPACE)",
         timer.elapsed()
@@ -114,7 +114,7 @@ fn test_bang_invalid_preceeding_space() {
 fn test_bang_invalid_single_char() {
     let infix = "! test !gh";
     let timer = Instant::now();
-    let indices = unsafe { parse_bang_indexes(infix) };
+    let indices = parse_bang_indexes(infix);
     eprintln!(
         "Took {:?} to retrieve the bang indices. (INVALID SINGLE CHAR)",
         timer.elapsed()

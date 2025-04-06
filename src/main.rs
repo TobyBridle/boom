@@ -1,7 +1,7 @@
-use std::{collections::HashMap, io, time::Instant};
+use std::{io, time::Instant};
 
 use boom::{parse_bangs::parse_bang_file, resolver::resolve};
-use cache::{CACHE, init_list, insert_bang};
+use cache::{init_list, insert_bang};
 use clap::Parser;
 use cli::LaunchType;
 use ntex::web;
@@ -15,7 +15,6 @@ pub mod routes;
 const ADDR: &str = "127.0.0.1";
 const PORT: u16 = 3000;
 
-#[macro_use(concat_string)]
 extern crate concat_string;
 
 #[ntex::main]
@@ -54,9 +53,7 @@ async fn main() -> std::io::Result<()> {
         insert_bang(bang.trigger.clone(), idx).unwrap();
     });
     match args.launch {
-        LaunchType::Serve => {
-            serve().await.unwrap();
-        }
+        LaunchType::Serve => serve().await,
         LaunchType::Resolve { search_query } => {
             println!("Resolved: {:?}", resolve(search_query.as_str()));
         }
@@ -65,11 +62,17 @@ async fn main() -> std::io::Result<()> {
     Ok(())
 }
 
-pub async fn serve() -> Result<(), std::io::Error> {
+/// Serve the web server on [ADDR]:[PORT]
+///
+/// # Panics
+/// Panics if the server could not bind to the desired address/port.
+pub async fn serve() {
     info!(name:"Boom", "Starting Web Server on {}:{}", ADDR, PORT);
 
     web::HttpServer::new(|| web::App::new().service(redirector).service(list_bangs))
-        .bind((ADDR, PORT))?
+        .bind((ADDR, PORT))
+        .expect("Address and port should be valid with no other applications using the same port.")
         .run()
         .await
+        .unwrap_or_else(|_| panic!("Could not bind to {ADDR}:{PORT}"));
 }

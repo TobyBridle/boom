@@ -36,7 +36,7 @@ pub async fn list_bangs() -> web::HttpResponse {
                         redirection.short_name, redirection.trigger, redirection.url_template
                     )
                     .as_str(),
-                )
+                );
             });
 
             return web::HttpResponse::Ok()

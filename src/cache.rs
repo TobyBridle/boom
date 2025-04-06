@@ -18,8 +18,12 @@ pub static REDIRECT_LIST: LazyLock<RwLock<Vec<Redirect>>> = LazyLock::new(|| RwL
 ///
 /// # Example
 /// ```
-/// let bangs = get_bangs_from_file()?;
-/// init_list(bangs, false)?;
+/// use boom::cache::init_list;
+/// use boom::boom::Redirect;
+///
+/// fn get_bangs_from_file() -> Vec<Redirect> { vec![] }
+/// let bangs = get_bangs_from_file();
+/// init_list(bangs, false).unwrap();
 /// ```
 pub fn init_list(
     mut redirects: Vec<Redirect>,
@@ -28,7 +32,7 @@ pub fn init_list(
     {
         if !REDIRECT_LIST.try_read()?.is_empty() && !overwrite {
             return Err("List already initialised".into());
-        };
+        }
     }
     REDIRECT_LIST.try_write()?.append(&mut redirects);
     Ok(())
@@ -41,11 +45,15 @@ pub fn init_list(
 ///
 /// # Example
 /// ```
-/// // https://google.com/search?q={{{s}}}
-/// //                             ^     ^
-///                               <x>   <y>
-/// let z: usize = get_index("yt");
-/// insert_bang("yt".to_string(), x, y, z).ok()?;
+/// use boom::cache::{insert_bang};
+///
+/// fn get_index(key: &str) -> Option<usize> {
+///     // fancy schmancy key grabbing logic here
+///     Some(0) // default value for the sake of an example
+/// }
+///
+/// let i = get_index("yt").unwrap();
+/// insert_bang("yt".to_string(), i).ok().unwrap_or_else(|| println!("yt bang does not exist"));
 /// ```
 pub fn insert_bang(bang: String, template_index: usize) -> Result<(), Box<dyn std::error::Error>> {
     CACHE.try_write()?.insert(bang, template_index);
@@ -59,7 +67,9 @@ pub fn insert_bang(bang: String, template_index: usize) -> Result<(), Box<dyn st
 ///
 /// # Example
 /// ```
-/// let does_bang_exist = get_bang("yt")?.is_some();
+/// use boom::cache::get_bang;
+///
+/// let does_bang_exist = get_bang("yt").unwrap().is_some();
 /// ```
 pub fn get_bang(bang: &str) -> Result<Option<usize>, Box<dyn std::error::Error>> {
     Ok(CACHE.try_read()?.get(bang).copied())

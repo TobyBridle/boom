@@ -1,6 +1,6 @@
 use boom::boom::parse_templates::parse_template_indexes;
 
-const STRINGS: [&str; 1589] = [
+static STRINGS: [&str; 1589] = [
     "http://www.01net.com/recherche/recherche.php?searchstring={{{s}}}&chaine=home",
     "https://www.bmw2002faq.com/search/?q={{{s}}}",
     "http://boxofficemojo.com/search/?q={{{s}}}",
@@ -1598,5 +1598,6 @@ fn main() {
 
 #[divan::bench(args = STRINGS)]
 fn bench_templates(template: &str) {
+    #[allow(unused_must_use)]
     parse_template_indexes(template);
 }

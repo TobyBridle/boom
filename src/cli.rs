@@ -18,7 +18,7 @@ pub enum LaunchType {
     },
 }
 
-/// Processor for DuckDuckGo Bang Parsing
+/// Processor for [DuckDuckGo Bang](https://duckduckgo.com/bangs) Parsing
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 pub struct Args {

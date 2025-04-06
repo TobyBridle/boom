@@ -9,7 +9,8 @@ use super::Match;
 
 const MAX_TEMPLATE_TERMS: usize = 2;
 
-#[inline(always)]
+#[inline]
+#[allow(dead_code)] // The SIMD approach uses 
 fn merge_slices(a: &mut [Match], b: &[Match]) {
     let mut a_idx = 0usize;
     let mut b_idx = 0usize;
@@ -31,7 +32,7 @@ fn merge_slices(a: &mut [Match], b: &[Match]) {
     }
 }
 
-#[inline(always)]
+#[inline]
 fn iterative_parse_template_indexes(template: &str) -> Option<[Match; MAX_TEMPLATE_TERMS]> {
     let mut results = [Match::new(0, 0); MAX_TEMPLATE_TERMS];
     let mut idx = 0usize;
@@ -54,7 +55,8 @@ fn iterative_parse_template_indexes(template: &str) -> Option<[Match; MAX_TEMPLA
     }
 }
 
-#[inline(always)]
+#[inline]
+#[must_use]
 pub fn parse_template_indexes(template: &str) -> Option<[Match; MAX_TEMPLATE_TERMS]> {
     #[cfg(all(
         any(target_arch = "x86", target_arch = "x86_64"),

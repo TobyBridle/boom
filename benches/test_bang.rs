@@ -18,5 +18,6 @@ const STRINGS: [&str; 9] = [
 
 #[divan::bench(args = STRINGS, sample_count = 10_000)]
 fn bench_bang(bang: &str) {
-    unsafe { parse_bang_indexes(bang) };
+    #[allow(unused_must_use)]
+    parse_bang_indexes(bang);
 }

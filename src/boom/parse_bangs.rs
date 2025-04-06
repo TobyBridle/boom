@@ -44,8 +44,8 @@ pub fn parse_bang_file(
         cwd
     };
 
-    assert!(bangs.exists(), "File {bangs:?} does not exist.",);
-    assert!(bangs.is_file(), "{bangs:?} is not a file.");
+    assert!(bangs.exists(), "File {} does not exist.", bangs.display());
+    assert!(bangs.is_file(), "{} is not a file.", bangs.display());
 
     let bang_file = File::open(bangs)?;
     let breader = std::io::BufReader::new(bang_file);
@@ -54,7 +54,7 @@ pub fn parse_bang_file(
     Ok(redirects)
 }
 
-#[inline(always)]
+#[inline]
 fn parse_bang_indexes_iter(bang: &str) -> Option<Match> {
     let bytes = bang.as_bytes();
     let len = bytes.len();
@@ -74,7 +74,22 @@ fn parse_bang_indexes_iter(bang: &str) -> Option<Match> {
     None
 }
 
-#[inline(always)]
+/// Parse the indexes of the bang within the string.
+/// Will use a SIMD approach when possible, defaulting to an iterative one.
+/// The performance between the two is negligible.
+///
+/// **NOTE**: the start index is __inclusive__, whereas the end is __exclusive__.
+///
+/// # Example
+/// ```rs
+/// let bang_str = "!gh tobybridle";
+/// if let Some(indexes) = parse_bang_indexes(bang_str) {
+///     dbg!(indexes); // Match { start: 0, end: 3}
+/// }
+/// ```
+///
+#[inline]
+#[must_use]
 pub fn parse_bang_indexes(bang: &str) -> Option<Match> {
     #[cfg(all(
         any(target_arch = "x86", target_arch = "x86_64"),
