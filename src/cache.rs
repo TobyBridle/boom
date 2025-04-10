@@ -1,6 +1,7 @@
 use std::{
     collections::HashMap,
-    sync::{LazyLock, RwLock},
+    error::Error,
+    sync::{LazyLock, RwLock, RwLockReadGuard},
 };
 
 use crate::boom::Redirect;
@@ -8,7 +9,7 @@ use crate::boom::Redirect;
 pub static CACHE: LazyLock<RwLock<HashMap<String, usize>>> =
     LazyLock::new(|| RwLock::new(HashMap::with_capacity(128)));
 
-pub static REDIRECT_LIST: LazyLock<RwLock<Vec<Redirect>>> = LazyLock::new(|| RwLock::new(vec![]));
+static REDIRECT_LIST: LazyLock<RwLock<Vec<Redirect>>> = LazyLock::new(|| RwLock::new(vec![]));
 
 /// Initialises the list of redirects, unless specified otherwise using `overwrite`.
 ///
@@ -30,11 +31,34 @@ pub fn init_list(
     overwrite: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
     {
-        if !REDIRECT_LIST.try_read()?.is_empty() && !overwrite {
+        if !get_redirects()?.is_empty() && !overwrite {
             return Err("List already initialised".into());
         }
     }
     REDIRECT_LIST.try_write()?.append(&mut redirects);
+    Ok(())
+}
+
+/// Get an instance of the `REDIRECT_LIST` wrapped within a read guard.
+///
+/// # Errors
+/// This function will error if the `try_read` call fails.
+/// Please check the documentation of [`std::sync::poison::rwlock::RwLock::try_read`] for more info
+pub fn get_redirects<'a>() -> Result<RwLockReadGuard<'a, Vec<Redirect>>, Box<dyn Error>> {
+    match REDIRECT_LIST.try_read() {
+        Ok(list) => Ok(list),
+        Err(e) => Err(Box::new(e)),
+    }
+}
+
+/// Set the value of the global `REDIRECT_LIST`.
+/// **This does not append, it overwrites.**
+///
+/// # Errors
+/// This function will error if the `try_write` call fails.
+/// Please check the documentation of [`std::sync::poison::rwlock::RwLock::try_write`] for more info
+pub fn set_redirects(redirects: Vec<Redirect>) -> Result<(), Box<dyn std::error::Error>> {
+    (*REDIRECT_LIST.try_write()?) = redirects;
     Ok(())
 }
 

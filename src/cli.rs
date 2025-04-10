@@ -1,7 +1,15 @@
-use std::path::PathBuf;
+use std::{env, path::PathBuf};
 
 use clap::{Parser, Subcommand, command};
 use serde::Serialize;
+
+fn get_default_bang_path() -> PathBuf {
+    let home_dir = env::var("HOME").unwrap_or_else(|_| ".".to_string());
+    PathBuf::from(&home_dir)
+        .join(".config")
+        .join("boom")
+        .join("default_bangs.json")
+}
 
 #[derive(Subcommand, Clone, Default, Debug, Serialize)]
 pub enum LaunchType {
@@ -19,12 +27,12 @@ pub enum LaunchType {
 }
 
 /// Processor for [DuckDuckGo Bang](https://duckduckgo.com/bangs) Parsing
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, Clone)]
 #[command(version, about, long_about = None)]
 pub struct Args {
     #[clap(subcommand)]
     pub launch: LaunchType,
     /// Path to a JSON file containing bang commands
-    #[arg(short, long, default_value = None)]
-    pub bang_commands: Option<PathBuf>,
+    #[arg(short, long, default_value = get_default_bang_path().into_os_string())]
+    pub bang_commands: PathBuf,
 }

@@ -4,7 +4,7 @@ pub mod resolver;
 
 use std::{cmp::max, ops::Range};
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 pub static DEFAULT_SEARCH_TEMPLATE: &str = "https://google.com/search?q={{{s}}}";
 pub static DEFAULT_SEARCH_INDEXES: std::sync::LazyLock<Match> =
@@ -39,7 +39,7 @@ impl Match {
     }
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Redirect {
     /// The short name or abbreviation of the bang command.
     #[serde(rename = "s")]

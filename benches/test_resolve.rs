@@ -1,10 +1,17 @@
+use std::env;
+
 use boom::{
     boom::{parse_bangs::parse_bang_file, resolver::resolve},
     cache::{init_list, insert_bang},
 };
 
 fn main() {
-    let bangs = parse_bang_file(None).unwrap();
+    let bangs = parse_bang_file(&{
+        let mut d = env::current_dir().unwrap();
+        d.push("default_bangs.json");
+        d
+    })
+    .unwrap();
     bangs.iter().enumerate().for_each(|(idx, bang)| {
         insert_bang(bang.trigger.clone(), idx).unwrap();
     });

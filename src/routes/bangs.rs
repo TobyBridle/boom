@@ -1,10 +1,11 @@
 use std::{
-    sync::{LazyLock, RwLock},
+    sync::{Arc, LazyLock, Mutex, RwLock},
     time::{Duration, Instant},
 };
 
-use crate::cache::REDIRECT_LIST;
-use ntex::web;
+use crate::cache::get_redirects;
+use crate::sync::SyncHandler;
+use ntex::web::{self};
 use tracing::info;
 
 static LAST_HTML_UPDATE: LazyLock<RwLock<Option<Instant>>> = LazyLock::new(|| RwLock::new(None));
@@ -13,7 +14,7 @@ static BANGS_HTML_CACHE: LazyLock<RwLock<String>> =
 static HTML_STYLES: &str = "<style>table { font-family: monospace; } table th { text-align: left; padding: 1rem 0; font-size: 1.25rem; } table tr:nth-child(2n) { background: #161616; } table tr:nth-child(2n+1) { background: #181818; }</style>";
 
 #[web::get("/bangs")]
-pub async fn list_bangs() -> web::HttpResponse {
+pub async fn list_bangs(st: ntex::web::types::State<Arc<Mutex<SyncHandler>>>) -> web::HttpResponse {
     let last_update = LAST_HTML_UPDATE
         .try_read()
         .ok()
@@ -28,7 +29,7 @@ pub async fn list_bangs() -> web::HttpResponse {
 
     if last_update.elapsed().as_secs() > 300 {
         info!(name: "Boom", "Updating /bangs");
-        if let Ok(lock) = REDIRECT_LIST.try_read() {
+        if let Ok(lock) = get_redirects() {
             lock.iter().for_each(|redirection| {
                 buffer.push_str(
                     format!(

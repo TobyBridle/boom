@@ -1,4 +1,9 @@
-use std::{io, time::Instant};
+use std::{
+    io,
+    path::PathBuf,
+    sync::{Arc, Mutex},
+    time::Instant,
+};
 
 use boom::{parse_bangs::parse_bang_file, resolver::resolve};
 use cache::{init_list, insert_bang};
@@ -6,11 +11,13 @@ use clap::Parser;
 use cli::LaunchType;
 use ntex::web;
 use routes::{bangs::list_bangs, index::redirector};
+use sync::SyncHandler;
 use tracing::{Level, error, info};
 pub mod boom;
 pub mod cache;
 pub mod cli;
 pub mod routes;
+pub mod sync;
 
 const ADDR: &str = "127.0.0.1";
 const PORT: u16 = 3000;
@@ -34,7 +41,7 @@ async fn main() -> std::io::Result<()> {
 
     info!(name: "Boom", "Parsing Bangs!");
     let now = Instant::now();
-    let bangs = parse_bang_file(None)
+    let bangs = parse_bang_file(&args.bang_commands)
         .map_err(|e| {
             error!("Could not parse bangs! {:?}", e);
         })
@@ -52,8 +59,9 @@ async fn main() -> std::io::Result<()> {
     bangs.iter().enumerate().for_each(|(idx, bang)| {
         insert_bang(bang.trigger.clone(), idx).unwrap();
     });
+
     match args.launch {
-        LaunchType::Serve => serve().await,
+        LaunchType::Serve => serve(args.bang_commands).await,
         LaunchType::Resolve { search_query } => {
             println!("Resolved: {:?}", resolve(search_query.as_str()));
         }
@@ -66,13 +74,20 @@ async fn main() -> std::io::Result<()> {
 ///
 /// # Panics
 /// Panics if the server could not bind to the desired address/port.
-pub async fn serve() {
+pub async fn serve(bang_commands: PathBuf) {
     info!(name:"Boom", "Starting Web Server on {}:{}", ADDR, PORT);
 
-    web::HttpServer::new(|| web::App::new().service(redirector).service(list_bangs))
-        .bind((ADDR, PORT))
-        .expect("Address and port should be valid with no other applications using the same port.")
-        .run()
-        .await
-        .unwrap_or_else(|_| panic!("Could not bind to {ADDR}:{PORT}"));
+    let handler = Arc::new(Mutex::new(SyncHandler::new(bang_commands)));
+
+    web::HttpServer::new(move || {
+        web::App::new()
+            .state(handler.clone())
+            .service(redirector)
+            .service(list_bangs)
+    })
+    .bind((ADDR, PORT))
+    .expect("Address and port should be valid with no other applications using the same port.")
+    .run()
+    .await
+    .unwrap_or_else(|_| panic!("Could not bind to {ADDR}:{PORT}"));
 }

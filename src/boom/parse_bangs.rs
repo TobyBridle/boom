@@ -1,4 +1,4 @@
-use std::{env, fs::File, path::PathBuf};
+use std::{fs::File, path::PathBuf};
 
 use super::{Match, Redirect};
 
@@ -33,17 +33,7 @@ use std::arch::x86_64::*;
 /// // Use default bangs file
 /// let vec: Vec<Redirect> = parse_bang_file(None).unwrap_or(vec![]);
 /// ```
-pub fn parse_bang_file(
-    bang_path: Option<PathBuf>,
-) -> Result<Vec<Redirect>, Box<dyn std::error::Error>> {
-    let bangs = if let Some(p) = bang_path {
-        p
-    } else {
-        let mut cwd = env::current_dir()?;
-        cwd.push("default_bangs.json");
-        cwd
-    };
-
+pub fn parse_bang_file(bangs: &PathBuf) -> Result<Vec<Redirect>, Box<dyn std::error::Error>> {
     assert!(bangs.exists(), "File {} does not exist.", bangs.display());
     assert!(bangs.is_file(), "{} is not a file.", bangs.display());
 

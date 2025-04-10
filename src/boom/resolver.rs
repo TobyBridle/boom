@@ -1,6 +1,6 @@
 use concat_string::concat_string;
 
-use crate::cache::{REDIRECT_LIST, get_bang};
+use crate::cache::{get_bang, get_redirects};
 
 use super::{
     DEFAULT_SEARCH_INDEXES, DEFAULT_SEARCH_TEMPLATE, parse_bangs::parse_bang_indexes,
@@ -35,7 +35,8 @@ pub fn resolve(query: &str) -> String {
             let redirect_idx = get_bang(bang)
                 .unwrap()
                 .expect("Expected all entries to be available in cache");
-            let mut template = REDIRECT_LIST.read().unwrap()[redirect_idx]
+            let mut template = get_redirects().expect("Redirect list should be initialised")
+                [redirect_idx]
                 .url_template
                 .clone();
 

@@ -23,7 +23,7 @@ harness = false
 
 [dependencies]
 allocation-counter = "0.8.1"
-clap = { version = "4.5.34", features = ["derive"] }
+clap = { version = "4.5.34", features = ["derive", "string"] }
 concat-string = "1.0.1"
 ntex = { version = "2.12.3", features = ["tokio"] }
 serde = { version = "1.0.219", features = ["serde_derive"] }
