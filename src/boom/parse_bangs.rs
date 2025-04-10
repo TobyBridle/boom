@@ -29,9 +29,14 @@ use std::arch::x86_64::*;
 ///
 /// # Example
 /// ```
+/// use std::env;
 /// use boom::boom::{Redirect, parse_bangs::parse_bang_file};
 /// // Use default bangs file
-/// let vec: Vec<Redirect> = parse_bang_file(None).unwrap_or(vec![]);
+//  let vec: Vec<Redirect> = parse_bang_file(&{
+//      let mut d = env::current_dir().unwrap();
+//      d.push("default_bangs.json");
+//      d
+//  }).unwrap_or(vec![]);
 /// ```
 pub fn parse_bang_file(bangs: &PathBuf) -> Result<Vec<Redirect>, Box<dyn std::error::Error>> {
     assert!(bangs.exists(), "File {} does not exist.", bangs.display());
