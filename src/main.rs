@@ -10,6 +10,7 @@ use tracing::{Level, error, info};
 pub mod boom;
 pub mod cache;
 pub mod cli;
+pub mod config;
 pub mod routes;
 
 extern crate concat_string;

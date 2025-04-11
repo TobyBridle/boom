@@ -3,12 +3,12 @@ use std::{env, path::PathBuf};
 use clap::{Parser, Subcommand, command};
 use serde::Serialize;
 
-fn get_default_bang_path() -> PathBuf {
+pub fn get_default_bang_path() -> PathBuf {
     let home_dir = env::var("HOME").unwrap_or_else(|_| ".".to_string());
     PathBuf::from(&home_dir)
-        .join(".config")
+        .join(".cache")
         .join("boom")
-        .join("default_bangs.json")
+        .join("bangs.json")
 }
 
 #[derive(Subcommand, Clone, Debug, Serialize)]

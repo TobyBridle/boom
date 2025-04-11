@@ -1,0 +1,25 @@
+[server]
+address = "127.0.0.1"
+port = 3000
+
+[bangs]
+# The entirety of `{{{s}}}` will be replaced with the search term
+default_search_template = "https://google.com/search?q={{{s}}}"
+
+# Set the path to a default bang file
+[bangs.default]
+# Whether to bother requesting the bangs or not
+enabled = true
+filepath = "~/.cache/boom/bangs.json"
+# Where to fetch the bangs from
+remote = "https://duckduckgo.com/bang.js"
+
+[bangs.custom]
+boomdev = { template = "https://github.com/tobybridle/boom", trigger = "boomdev" }
+# ^ shortname
+
+# You can also set them like this
+[bangs.custom.amazingdev]
+# `!amazedev boom` resolves to the url for this project!
+template = "https://github.com/tobybridle/{{{s}}}"
+trigger = "amazedev"
