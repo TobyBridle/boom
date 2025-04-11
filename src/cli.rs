@@ -11,11 +11,24 @@ fn get_default_bang_path() -> PathBuf {
         .join("default_bangs.json")
 }
 
-#[derive(Subcommand, Clone, Default, Debug, Serialize)]
+#[derive(Subcommand, Clone, Debug, Serialize)]
 pub enum LaunchType {
     /// Launch the redirecting server
-    #[default]
-    Serve,
+    /// =============================
+    /// To make use of the server, set the search engine on your
+    /// browser to match the address & port here.
+    /// For example, with the default config, you would add
+    /// the search engine as `http://localhost:3000?q=%s`
+    #[command(verbatim_doc_comment)]
+    Serve {
+        /// The address to run the server on
+        #[arg(long, default_value = String::from("127.0.0.1"))]
+        addr: String,
+        /// The port to run the server on
+        /// e.g 3000 -> localhost:3000
+        #[arg(short, long, default_value_t = 3000)]
+        port: u16,
+    },
 
     /// Test the resolution of a search query
     Resolve {

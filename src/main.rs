@@ -19,9 +19,6 @@ pub mod cli;
 pub mod routes;
 pub mod sync;
 
-const ADDR: &str = "127.0.0.1";
-const PORT: u16 = 3000;
-
 extern crate concat_string;
 
 #[ntex::main]
@@ -61,7 +58,7 @@ async fn main() -> std::io::Result<()> {
     });
 
     match args.launch {
-        LaunchType::Serve => serve(args.bang_commands).await,
+        LaunchType::Serve { addr, port } => serve(addr.as_str(), port, args.bang_commands).await,
         LaunchType::Resolve { search_query } => {
             println!("Resolved: {:?}", resolve(search_query.as_str()));
         }
@@ -74,8 +71,8 @@ async fn main() -> std::io::Result<()> {
 ///
 /// # Panics
 /// Panics if the server could not bind to the desired address/port.
-pub async fn serve(bang_commands: PathBuf) {
-    info!(name:"Boom", "Starting Web Server on {}:{}", ADDR, PORT);
+pub async fn serve(address: &str, port: u16, bang_commands: PathBuf) {
+    info!(name:"Boom", "Starting Web Server on {}:{}", address, port);
 
     let handler = Arc::new(Mutex::new(SyncHandler::new(bang_commands)));
 
@@ -85,9 +82,9 @@ pub async fn serve(bang_commands: PathBuf) {
             .service(redirector)
             .service(list_bangs)
     })
-    .bind((ADDR, PORT))
+    .bind((address, port))
     .expect("Address and port should be valid with no other applications using the same port.")
     .run()
     .await
-    .unwrap_or_else(|_| panic!("Could not bind to {ADDR}:{PORT}"));
+    .unwrap_or_else(|_| panic!("Could not bind to {address}:{port}"));
 }
