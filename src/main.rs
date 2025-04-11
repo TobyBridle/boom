@@ -1,9 +1,4 @@
-use std::{
-    io,
-    path::PathBuf,
-    sync::{Arc, Mutex},
-    time::Instant,
-};
+use std::{io, time::Instant};
 
 use boom::{parse_bangs::parse_bang_file, resolver::resolve};
 use cache::{init_list, insert_bang};
@@ -11,13 +6,11 @@ use clap::Parser;
 use cli::LaunchType;
 use ntex::web;
 use routes::{bangs::list_bangs, index::redirector};
-use sync::SyncHandler;
 use tracing::{Level, error, info};
 pub mod boom;
 pub mod cache;
 pub mod cli;
 pub mod routes;
-pub mod sync;
 
 extern crate concat_string;
 
@@ -58,7 +51,7 @@ async fn main() -> std::io::Result<()> {
     });
 
     match args.launch {
-        LaunchType::Serve { addr, port } => serve(addr.as_str(), port, args.bang_commands).await,
+        LaunchType::Serve { addr, port } => serve(addr.as_str(), port).await,
         LaunchType::Resolve { search_query } => {
             println!("Resolved: {:?}", resolve(search_query.as_str()));
         }
@@ -71,20 +64,13 @@ async fn main() -> std::io::Result<()> {
 ///
 /// # Panics
 /// Panics if the server could not bind to the desired address/port.
-pub async fn serve(address: &str, port: u16, bang_commands: PathBuf) {
+pub async fn serve(address: &str, port: u16) {
     info!(name:"Boom", "Starting Web Server on {}:{}", address, port);
 
-    let handler = Arc::new(Mutex::new(SyncHandler::new(bang_commands)));
-
-    web::HttpServer::new(move || {
-        web::App::new()
-            .state(handler.clone())
-            .service(redirector)
-            .service(list_bangs)
-    })
-    .bind((address, port))
-    .expect("Address and port should be valid with no other applications using the same port.")
-    .run()
-    .await
-    .unwrap_or_else(|_| panic!("Could not bind to {address}:{port}"));
+    web::HttpServer::new(move || web::App::new().service(redirector).service(list_bangs))
+        .bind((address, port))
+        .expect("Address and port should be valid with no other applications using the same port.")
+        .run()
+        .await
+        .unwrap_or_else(|_| panic!("Could not bind to {address}:{port}"));
 }

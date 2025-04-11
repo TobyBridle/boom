@@ -1,10 +1,9 @@
 use std::{
-    sync::{Arc, LazyLock, Mutex, RwLock},
+    sync::{LazyLock, RwLock},
     time::{Duration, Instant},
 };
 
 use crate::cache::get_redirects;
-use crate::sync::SyncHandler;
 use ntex::web::{self};
 use tracing::info;
 
@@ -14,7 +13,7 @@ static BANGS_HTML_CACHE: LazyLock<RwLock<String>> =
 static HTML_STYLES: &str = "<style>table { font-family: monospace; } table th { text-align: left; padding: 1rem 0; font-size: 1.25rem; } table tr:nth-child(2n) { background: #161616; } table tr:nth-child(2n+1) { background: #181818; }</style>";
 
 #[web::get("/bangs")]
-pub async fn list_bangs(st: ntex::web::types::State<Arc<Mutex<SyncHandler>>>) -> web::HttpResponse {
+pub async fn list_bangs() -> web::HttpResponse {
     let last_update = LAST_HTML_UPDATE
         .try_read()
         .ok()
