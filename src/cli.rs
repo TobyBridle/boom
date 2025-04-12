@@ -3,6 +3,14 @@ use std::{env, path::PathBuf};
 use clap::{Parser, Subcommand, command};
 use serde::Serialize;
 
+pub fn get_default_config_path() -> PathBuf {
+    let home_dir = env::var("HOME").unwrap_or_else(|_| ".".to_string());
+    PathBuf::from(&home_dir)
+        .join(".config")
+        .join("boom")
+        .join("config.toml")
+}
+
 pub fn get_default_bang_path() -> PathBuf {
     let home_dir = env::var("HOME").unwrap_or_else(|_| ".".to_string());
     PathBuf::from(&home_dir)
@@ -37,6 +45,16 @@ pub enum LaunchType {
         #[arg(required = true)]
         search_query: String,
     },
+
+    /// Validate the configuration
+    Validate {
+        /// Path to the configuration file to validate
+        #[arg(short, long, default_value = get_default_config_path().into_os_string())]
+        config: PathBuf,
+
+        #[arg(short, default_value_t = false)]
+        verbose: bool,
+    },
 }
 
 /// Processor for [DuckDuckGo Bang](https://duckduckgo.com/bangs) Parsing
@@ -45,7 +63,4 @@ pub enum LaunchType {
 pub struct Args {
     #[clap(subcommand)]
     pub launch: LaunchType,
-    /// Path to a JSON file containing bang commands
-    #[arg(short, long, default_value = get_default_bang_path().into_os_string())]
-    pub bang_commands: PathBuf,
 }

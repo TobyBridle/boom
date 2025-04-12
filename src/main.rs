@@ -1,9 +1,14 @@
-use std::{io, time::Instant};
+use std::{
+    fs::File,
+    io::{self, BufReader, Read},
+    time::Instant,
+};
 
 use boom::{parse_bangs::parse_bang_file, resolver::resolve};
 use cache::{init_list, insert_bang};
 use clap::Parser;
-use cli::LaunchType;
+use cli::{LaunchType, get_default_bang_path};
+use config::parse_config;
 use ntex::web;
 use routes::{bangs::list_bangs, index::redirector};
 use tracing::{Level, error, info};
@@ -15,24 +20,10 @@ pub mod routes;
 
 extern crate concat_string;
 
-#[ntex::main]
-async fn main() -> std::io::Result<()> {
-    tracing_subscriber::fmt()
-        .with_max_level(if cfg!(debug_assertions) {
-            Level::DEBUG
-        } else {
-            Level::INFO
-        })
-        .with_ansi(true)
-        .compact()
-        .with_writer(io::stderr)
-        .init();
-
-    let args = cli::Args::parse();
-
+fn setup() {
     info!(name: "Boom", "Parsing Bangs!");
     let now = Instant::now();
-    let bangs = parse_bang_file(&args.bang_commands)
+    let bangs = parse_bang_file(&get_default_bang_path())
         .map_err(|e| {
             error!("Could not parse bangs! {:?}", e);
         })
@@ -50,11 +41,46 @@ async fn main() -> std::io::Result<()> {
     bangs.iter().enumerate().for_each(|(idx, bang)| {
         insert_bang(bang.trigger.clone(), idx).unwrap();
     });
+}
+
+#[ntex::main]
+async fn main() -> std::io::Result<()> {
+    tracing_subscriber::fmt()
+        .with_max_level(if cfg!(debug_assertions) {
+            Level::DEBUG
+        } else {
+            Level::INFO
+        })
+        .with_ansi(true)
+        .compact()
+        .with_writer(io::stderr)
+        .init();
+
+    let args = cli::Args::parse();
 
     match args.launch {
-        LaunchType::Serve { addr, port } => serve(addr.as_str(), port).await,
+        LaunchType::Serve { addr, port } => {
+            setup();
+            serve(addr.as_str(), port).await
+        }
         LaunchType::Resolve { search_query } => {
+            setup();
             println!("Resolved: {:?}", resolve(search_query.as_str()));
+        }
+        LaunchType::Validate { config, verbose } => {
+            info!("Reading {}", config.display());
+            let mut config_buffer = String::new();
+            let mut breader = BufReader::new(File::open(config)?);
+            breader.read_to_string(&mut config_buffer)?;
+            match parse_config(config_buffer) {
+                Ok(cfg) => {
+                    if verbose {
+                        dbg!(cfg);
+                    }
+                    info!("Parsed config with no errors.")
+                }
+                Err(e) => error!(e),
+            }
         }
     }
 

@@ -23,7 +23,7 @@ macro_rules! parse_section {
 }
 
 #[derive(Deserialize, Default, Debug, PartialEq)]
-struct Config {
+pub struct Config {
     server: ServerConfig,
     bangs: BangConfig,
 }
@@ -106,12 +106,7 @@ fn parse_server_config(table: &Item) -> ServerConfig {
             port.is_integer(),
             "[server.port] is expected to be a u16. Got {port:?}"
         );
-        let port = port.as_str().unwrap().parse::<u16>();
-        assert!(
-            port.is_ok(),
-            "[server.port] is expected to be an IpAddr. Got {port:?}"
-        );
-        port.unwrap()
+        port.as_integer().unwrap() as u16
     } else {
         default.port
     };
@@ -249,7 +244,7 @@ fn parse_bang_config(config: &Item) -> BangConfig {
     }
 }
 
-fn parse_config(config: String) -> Result<Config, Box<dyn std::error::Error>> {
+pub fn parse_config(config: String) -> Result<Config, Box<dyn std::error::Error>> {
     let config = config
         .parse::<toml_edit::DocumentMut>()
         .expect("Config should be valid TOML");
