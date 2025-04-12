@@ -1,3 +1,4 @@
+pub mod grab_remote_bangs;
 pub mod parse_bangs;
 pub mod parse_templates;
 pub mod resolver;

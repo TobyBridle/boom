@@ -48,10 +48,6 @@ pub enum LaunchType {
 
     /// Validate the configuration
     Validate {
-        /// Path to the configuration file to validate
-        #[arg(short, long, default_value = get_default_config_path().into_os_string())]
-        config: PathBuf,
-
         #[arg(short, default_value_t = false)]
         verbose: bool,
     },
@@ -63,4 +59,8 @@ pub enum LaunchType {
 pub struct Args {
     #[clap(subcommand)]
     pub launch: LaunchType,
+
+    /// Path to the configuration file to validate
+    #[arg(short, long, default_value = get_default_config_path().into_os_string())]
+    pub config: PathBuf,
 }

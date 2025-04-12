@@ -4,11 +4,11 @@ use std::{
     time::Instant,
 };
 
-use boom::{parse_bangs::parse_bang_file, resolver::resolve};
+use boom::{grab_remote_bangs::grab_remote, parse_bangs::parse_bang_file, resolver::resolve};
 use cache::{init_list, insert_bang};
 use clap::Parser;
-use cli::{LaunchType, get_default_bang_path};
-use config::parse_config;
+use cli::LaunchType;
+use config::{Config, parse_config::parse_config, read_config::read_config};
 use ntex::web;
 use routes::{bangs::list_bangs, index::redirector};
 use tracing::{Level, error, info};
@@ -20,10 +20,20 @@ pub mod routes;
 
 extern crate concat_string;
 
-fn setup() {
+#[inline]
+async fn setup(config: Config) -> Result<(), Box<dyn std::error::Error>> {
+    if !config.bangs.default.enabled {
+        info!("[bangs.default.enabled] = false");
+        return Ok(());
+    }
+
     info!(name: "Boom", "Parsing Bangs!");
     let now = Instant::now();
-    let bangs = parse_bang_file(&get_default_bang_path())
+
+    dbg!(&config);
+    grab_remote(config.bangs.default.remote, &config.bangs.default.filepath).await?;
+
+    let bangs = parse_bang_file(&config.bangs.default.filepath)
         .map_err(|e| {
             error!("Could not parse bangs! {:?}", e);
         })
@@ -41,6 +51,8 @@ fn setup() {
     bangs.iter().enumerate().for_each(|(idx, bang)| {
         insert_bang(bang.trigger.clone(), idx).unwrap();
     });
+
+    Ok(())
 }
 
 #[ntex::main]
@@ -57,20 +69,28 @@ async fn main() -> std::io::Result<()> {
         .init();
 
     let args = cli::Args::parse();
+    let config = read_config(&args.config).expect("Config path should be valid & readable.");
+    rustls::crypto::ring::default_provider()
+        .install_default()
+        .expect("Failed to install rustls crypto provider");
 
     match args.launch {
         LaunchType::Serve { addr, port } => {
-            setup();
+            setup(config)
+                .await
+                .expect("Setup should be able to download bangs.");
             serve(addr.as_str(), port).await
         }
         LaunchType::Resolve { search_query } => {
-            setup();
+            setup(config)
+                .await
+                .expect("Setup should be able to download bangs.");
             println!("Resolved: {:?}", resolve(search_query.as_str()));
         }
-        LaunchType::Validate { config, verbose } => {
-            info!("Reading {}", config.display());
+        LaunchType::Validate { verbose } => {
+            info!("Reading {}", &args.config.display());
             let mut config_buffer = String::new();
-            let mut breader = BufReader::new(File::open(config)?);
+            let mut breader = BufReader::new(File::open(&args.config)?);
             breader.read_to_string(&mut config_buffer)?;
             match parse_config(config_buffer) {
                 Ok(cfg) => {
@@ -82,12 +102,12 @@ async fn main() -> std::io::Result<()> {
                 Err(e) => error!(e),
             }
         }
-    }
+    };
 
     Ok(())
 }
 
-/// Serve the web server on [ADDR]:[PORT]
+/// Serve the web server on `address` and `port`
 ///
 /// # Panics
 /// Panics if the server could not bind to the desired address/port.
