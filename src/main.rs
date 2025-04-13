@@ -5,7 +5,13 @@ use std::{
     time::Instant,
 };
 
-use axum::{Router, routing::get};
+use axum::{
+    Router, ServiceExt,
+    extract::FromRef,
+    response::IntoResponse,
+    routing::{get, get_service},
+};
+use axum_template::engine::Engine;
 use boom::{
     Redirect, grab_remote_bangs::grab_remote, parse_bangs::parse_bang_file, resolver::resolve,
 };
@@ -13,8 +19,10 @@ use cache::{init_list, insert_bang};
 use clap::Parser;
 use cli::LaunchType;
 use config::{Config, parse_config::parse_config, read_config::read_config};
+use handlebars::Handlebars;
 use routes::{bangs::list_bangs, index::redirector};
 use tokio::net::TcpListener;
+use tower_http::services::ServeDir;
 use tracing::{Level, error, info};
 pub mod boom;
 pub mod cache;
@@ -23,6 +31,13 @@ pub mod config;
 pub mod routes;
 
 extern crate concat_string;
+
+type AppEngine = Engine<Handlebars<'static>>;
+
+#[derive(Clone)]
+pub struct AppState {
+    engine: AppEngine,
+}
 
 #[inline]
 async fn setup(config: Config) -> Result<(), Box<dyn std::error::Error>> {
@@ -128,9 +143,17 @@ async fn main() -> std::io::Result<()> {
 pub async fn serve(address: &str, port: u16) {
     info!(name:"Boom", "Starting Web Server on {}:{}", address, port);
 
+    let mut hbs = Handlebars::new();
+    hbs.register_template_string("/bangs", include_str!("../assets/bangs/index.html"))
+        .expect("Template should be syntactically correct");
+
     let router = Router::new()
         .route("/", get(redirector))
-        .route("/bangs", get(list_bangs));
+        .route("/bangs", get(list_bangs))
+        .nest_service("/assets", ServeDir::new("assets"))
+        .with_state(AppState {
+            engine: Engine::from(hbs),
+        });
 
     let addr = SocketAddr::new(
         address.parse().expect("address should be a valid IpAddr"),
@@ -143,5 +166,7 @@ pub async fn serve(address: &str, port: u16) {
         }
     };
     info!(name:"Boom", "Server running on {addr}");
-    axum::serve(listener, router).await.unwrap();
+    axum::serve(listener, router.into_make_service())
+        .await
+        .unwrap();
 }

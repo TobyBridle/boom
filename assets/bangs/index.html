@@ -1,0 +1,63 @@
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="assets/bangs/style.css" />
+  </head>
+  <body>
+    <nav>
+      <button>Add Bang</button>
+      <input type="text" id="filterInput" placeholder="SEARCH BANGS" />
+    </nav>
+    <table>
+      <thead>
+        <tr>
+          <th>Short</th>
+          <th>Trigger</th>
+          <th>Template</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {{#each bangs}}
+        <tr style="--row-text: '{{this.s}} {{this.t}} {{this.u}}';">
+          <td>{{this.s}}</td>
+          <td>{{this.t}}</td>
+          <td>{{this.u}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+
+    <script>
+      const input = document.getElementById("filterInput");
+      const rows = document.querySelectorAll("table tbody tr");
+      let debounceTimer;
+
+      // Listen for input change to filter rows
+      function filterRows() {
+        const filterText = input.value.toLowerCase();
+
+        rows.forEach((row) => {
+          // Retrieve the text stored in --row-text and check if it matches the filter
+          const rowText = row.style
+            .getPropertyValue("--row-text")
+            .toLowerCase();
+
+          // Toggle row visibility based on whether it matches the filter
+          if (rowText.includes(filterText)) {
+            row.style.display = ""; // Show the row
+          } else {
+            row.style.display = "none"; // Hide the row
+          }
+        });
+      }
+
+      input.addEventListener("input", () => {
+        // Clear the previous debounce timer if any
+        clearTimeout(debounceTimer);
+
+        // Set a new timer for 300ms
+        debounceTimer = setTimeout(filterRows, 300);
+      });
+    </script>
+  </body>
+</html>
