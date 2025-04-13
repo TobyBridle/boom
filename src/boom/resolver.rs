@@ -52,7 +52,7 @@ pub fn resolve(query: &str) -> String {
 
                 result
             } else {
-                concat_string!(template, encoded_query)
+                template
             }
         },
     )
