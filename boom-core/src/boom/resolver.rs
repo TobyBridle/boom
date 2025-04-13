@@ -61,7 +61,8 @@ pub fn resolve(query: &str) -> String {
 mod tests {
     #[allow(unused_imports)]
     use crate::{
-        boom::{Redirect, resolver::resolve},
+        Redirect,
+        boom::resolver::resolve,
         cache::{init_list, insert_bang},
     };
 

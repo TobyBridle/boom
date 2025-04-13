@@ -1,15 +1,14 @@
 use std::{
-    collections::HashMap,
     sync::{LazyLock, RwLock},
     time::{Duration, Instant},
 };
 
-use crate::{AppEngine, AppState, boom::Redirect, cache::get_redirects};
 use axum::{extract::State, response::IntoResponse};
 use axum_template::RenderHtml;
-use handlebars::Handlebars;
+use boom_core::{Redirect, cache::get_redirects};
 use serde::Serialize;
-use tracing::info;
+
+use crate::AppState;
 
 static LAST_HTML_UPDATE: LazyLock<RwLock<Option<Instant>>> = LazyLock::new(|| RwLock::new(None));
 static BANGS_HTML_CACHE: LazyLock<RwLock<String>> =

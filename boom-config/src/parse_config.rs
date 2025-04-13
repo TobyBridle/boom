@@ -205,9 +205,10 @@ pub fn parse_config(config: String) -> Result<Config, Box<dyn std::error::Error>
 
 mod test {
     #[allow(unused_imports)]
-    use crate::config::{BangCustomConfig, ServerConfig, parse_config::parse_config};
-    #[allow(unused_imports)]
     use std::path::PathBuf;
+
+    #[allow(unused_imports)]
+    use crate::{BangCustomConfig, ServerConfig, parse_config::parse_config};
 
     #[test]
     fn test_config_parse() {

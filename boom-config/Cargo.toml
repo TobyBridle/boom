@@ -1,0 +1,10 @@
+[package]
+name = "boom-config"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+serde.workspace = true
+tracing.workspace = true
+toml_edit = { version = "0.22.24", features = ["serde"] }
+home = "0.5.11"

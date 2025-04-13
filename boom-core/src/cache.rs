@@ -4,7 +4,7 @@ use std::{
     sync::{LazyLock, RwLock, RwLockReadGuard},
 };
 
-use crate::boom::Redirect;
+use crate::Redirect;
 
 pub static CACHE: LazyLock<RwLock<HashMap<String, usize>>> =
     LazyLock::new(|| RwLock::new(HashMap::with_capacity(128)));

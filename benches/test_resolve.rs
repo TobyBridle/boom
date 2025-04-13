@@ -1,6 +1,6 @@
 use std::env;
 
-use boom::{
+use boom_core::{
     boom::{parse_bangs::parse_bang_file, resolver::resolve},
     cache::{init_list, insert_bang},
 };

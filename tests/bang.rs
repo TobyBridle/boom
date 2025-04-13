@@ -1,6 +1,6 @@
 use std::time::Instant;
 
-use boom::boom::{Match, parse_bangs::parse_bang_indexes};
+use boom_core::boom::{Match, parse_bangs::parse_bang_indexes};
 
 #[test]
 fn test_bang_retrieval_none() {

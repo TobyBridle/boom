@@ -1,7 +1,6 @@
 use std::time::Instant;
 
-use boom::boom::Match;
-use boom::boom::parse_templates::parse_template_indexes;
+use boom_core::boom::{Match, parse_templates::parse_template_indexes};
 
 #[test]
 fn test_empty_template() {

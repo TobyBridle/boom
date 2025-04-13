@@ -1,4 +1,4 @@
-use boom::boom::parse_templates::parse_template_indexes;
+use boom_core::boom::parse_templates::parse_template_indexes;
 
 static STRINGS: [&str; 1589] = [
     "http://www.01net.com/recherche/recherche.php?searchstring={{{s}}}&chaine=home",

@@ -1,4 +1,4 @@
-use boom::boom::parse_bangs::parse_bang_indexes;
+use boom_core::boom::parse_bangs::parse_bang_indexes;
 
 fn main() {
     divan::main();

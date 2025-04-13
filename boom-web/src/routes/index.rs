@@ -1,10 +1,9 @@
 use std::time::Instant;
 
 use axum::{extract::Query, response::Redirect};
+use boom_core::boom::resolver::resolve;
 use serde::Deserialize;
 use tracing::info;
-
-use crate::boom::resolver::resolve;
 
 #[derive(Deserialize)]
 pub struct SearchParams {

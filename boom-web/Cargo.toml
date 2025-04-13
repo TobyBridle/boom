@@ -1,0 +1,19 @@
+[package]
+name = "boom-web"
+version.workspace = true
+description.workspace = true
+authors.workspace = true
+repository.workspace = true
+edition.workspace = true
+
+[dependencies]
+axum = "0.8.3"
+axum-template = { version = "3.0.0", features = ["handlebars"] }
+boom-core = { path = "../boom-core" }
+handlebars = "6.3.2"
+serde.workspace = true
+tokio.workspace = true
+tower = { version = "0.5.2", features = ["full"] }
+tower-http = { version = "0.6.2", features = ["full"] }
+tracing.workspace = true
+tracing-subscriber.workspace = true

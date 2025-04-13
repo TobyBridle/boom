@@ -1,91 +1,63 @@
 use std::{
     fs::File,
     io::{self, BufReader, Read},
-    net::SocketAddr,
-    time::Instant,
 };
 
-use axum::{
-    Router, ServiceExt,
-    extract::FromRef,
-    response::IntoResponse,
-    routing::{get, get_service},
-};
-use axum_template::engine::Engine;
-use boom::{
-    Redirect, grab_remote_bangs::grab_remote, parse_bangs::parse_bang_file, resolver::resolve,
-};
-use cache::{init_list, insert_bang};
+use boom_config::parse_config::parse_config;
+use boom_core::boom::resolver::resolve;
+use boom_web::serve;
 use clap::Parser;
 use cli::LaunchType;
-use config::{Config, parse_config::parse_config, read_config::read_config};
-use handlebars::Handlebars;
-use routes::{bangs::list_bangs, index::redirector};
-use tokio::net::TcpListener;
-use tower_http::services::ServeDir;
 use tracing::{Level, error, info};
-pub mod boom;
-pub mod cache;
 pub mod cli;
-pub mod config;
-pub mod routes;
 
-extern crate concat_string;
-
-type AppEngine = Engine<Handlebars<'static>>;
-
-#[derive(Clone)]
-pub struct AppState {
-    engine: AppEngine,
-}
-
-#[inline]
-async fn setup(config: Config) -> Result<(), Box<dyn std::error::Error>> {
-    let mut bangs = if config.bangs.default.enabled {
-        grab_remote(&config.bangs.default.remote, &config.bangs.default.filepath).await?;
-
-        parse_bang_file(&config.bangs.default.filepath)
-            .map_err(|e| {
-                error!("Could not parse bangs! {:?}", e);
-            })
-            .unwrap()
-    } else {
-        info!("[bangs.default.enabled] = false");
-        vec![]
-    };
-
-    info!(name: "Boom", "Parsing Bangs!");
-    let now = Instant::now();
-
-    dbg!(&config);
-    config
-        .bangs
-        .custom
-        .iter()
-        .for_each(|(short_name, custom_config)| {
-            bangs.push(Redirect {
-                short_name: short_name.clone(),
-                trigger: custom_config.trigger.clone(),
-                url_template: custom_config.template.clone(),
-            });
-        });
-
-    let bangs_len = bangs.len();
-    info!(
-        name: "Boom",
-        "Parsed {} bangs in {:?}!",
-        bangs_len,
-        Instant::now().duration_since(now)
-    );
-
-    init_list(bangs.clone(), false).ok();
-
-    bangs.iter().enumerate().for_each(|(idx, bang)| {
-        insert_bang(bang.trigger.clone(), idx).unwrap();
-    });
-
-    Ok(())
-}
+// #[inline]
+// async fn setup(config: Config) -> Result<(), Box<dyn std::error::Error>> {
+//     let mut bangs = if config.bangs.default.enabled {
+//         grab_remote(&config.bangs.default.remote, &config.bangs.default.filepath).await?;
+//
+//         parse_bang_file(&config.bangs.default.filepath)
+//             .map_err(|e| {
+//                 error!("Could not parse bangs! {:?}", e);
+//             })
+//             .unwrap()
+//     } else {
+//         info!("[bangs.default.enabled] = false");
+//         vec![]
+//     };
+//
+//     info!(name: "Boom", "Parsing Bangs!");
+//     let now = Instant::now();
+//
+//     dbg!(&config);
+//     config
+//         .bangs
+//         .custom
+//         .iter()
+//         .for_each(|(short_name, custom_config)| {
+//             bangs.push(Redirect {
+//                 short_name: short_name.clone(),
+//                 trigger: custom_config.trigger.clone(),
+//                 url_template: custom_config.template.clone(),
+//             });
+//         });
+//
+//     let bangs_len = bangs.len();
+//     info!(
+//         name: "Boom",
+//         "Parsed {} bangs in {:?}!",
+//         bangs_len,
+//         Instant::now().duration_since(now)
+//     );
+//
+//     init_list(bangs.clone(), false).ok();
+//
+//     bangs.iter().enumerate().for_each(|(idx, bang)| {
+//         insert_bang(bang.trigger.clone(), idx).unwrap();
+//     });
+//
+//     Ok(())
+// }
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
@@ -101,19 +73,11 @@ async fn main() -> std::io::Result<()> {
         .init();
 
     let args = cli::Args::parse();
-    let config = read_config(&args.config).expect("Config path should be valid & readable.");
+    // let config = read_config(&args.config).expect("Config path should be valid & readable.");
 
     match args.launch {
-        LaunchType::Serve { addr, port } => {
-            setup(config)
-                .await
-                .expect("Setup should be able to download bangs.");
-            serve(addr.as_str(), port).await
-        }
+        LaunchType::Serve { addr, port } => serve(addr.as_str(), port).await,
         LaunchType::Resolve { search_query } => {
-            setup(config)
-                .await
-                .expect("Setup should be able to download bangs.");
             println!("Resolved: {:?}", resolve(search_query.as_str()));
         }
         LaunchType::Validate { verbose } => {
@@ -134,39 +98,4 @@ async fn main() -> std::io::Result<()> {
     };
 
     Ok(())
-}
-
-/// Serve the web server on `address` and `port`
-///
-/// # Panics
-/// Panics if the server could not bind to the desired address/port.
-pub async fn serve(address: &str, port: u16) {
-    info!(name:"Boom", "Starting Web Server on {}:{}", address, port);
-
-    let mut hbs = Handlebars::new();
-    hbs.register_template_string("/bangs", include_str!("../assets/bangs/index.html"))
-        .expect("Template should be syntactically correct");
-
-    let router = Router::new()
-        .route("/", get(redirector))
-        .route("/bangs", get(list_bangs))
-        .nest_service("/assets", ServeDir::new("assets"))
-        .with_state(AppState {
-            engine: Engine::from(hbs),
-        });
-
-    let addr = SocketAddr::new(
-        address.parse().expect("address should be a valid IpAddr"),
-        port,
-    );
-    let listener = match TcpListener::bind(addr).await {
-        Ok(listener) => listener,
-        Err(e) => {
-            return error!(name:"Boom", "Failed to bind to address {addr}. Reason: {e}");
-        }
-    };
-    info!(name:"Boom", "Server running on {addr}");
-    axum::serve(listener, router.into_make_service())
-        .await
-        .unwrap();
 }

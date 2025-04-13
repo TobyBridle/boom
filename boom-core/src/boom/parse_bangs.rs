@@ -1,12 +1,17 @@
-use std::{fs::File, path::PathBuf};
-
-use super::{Match, Redirect};
-
 #[cfg(all(
     any(target_arch = "x86", target_arch = "x86_64"),
     target_feature = "avx2"
 ))]
-use std::arch::x86_64::*;
+use std::arch::x86_64::{
+    __m128i, _MM_HINT_NTA, _mm_cmpeq_epi8, _mm_load_si128, _mm_loadu_si128, _mm_movemask_epi8,
+    _mm_prefetch, _mm_set1_epi8,
+};
+
+use std::{fs::File, path::PathBuf};
+
+use crate::Redirect;
+
+use super::Match;
 
 /// Parses bangs from using a path to a JSON file OR `./default_bangs.json`
 /// and returns a vector of [Redirect]

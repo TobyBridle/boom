@@ -8,8 +8,6 @@ use serde::Deserialize;
 pub mod parse_config;
 pub mod read_config;
 
-use crate::cli::get_default_bang_path;
-
 #[derive(Deserialize, Default, Debug, PartialEq)]
 pub struct Config {
     pub server: ServerConfig,
@@ -59,7 +57,7 @@ impl Default for BangDefaultConfig {
     fn default() -> Self {
         Self {
             enabled: true,
-            filepath: get_default_bang_path(),
+            filepath: PathBuf::new(),
             remote: "https://duckduckgo.com/bang.js".to_string(),
         }
     }
