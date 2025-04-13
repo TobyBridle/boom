@@ -6,15 +6,14 @@ use std::{
 };
 
 use axum::{Router, routing::get};
-use boom::{grab_remote_bangs::grab_remote, parse_bangs::parse_bang_file, resolver::resolve};
+use boom::{
+    Redirect, grab_remote_bangs::grab_remote, parse_bangs::parse_bang_file, resolver::resolve,
+};
 use cache::{init_list, insert_bang};
 use clap::Parser;
 use cli::LaunchType;
 use config::{Config, parse_config::parse_config, read_config::read_config};
-use routes::{
-    bangs::list_bangs,
-    index::{self, redirector},
-};
+use routes::{bangs::list_bangs, index::redirector};
 use tokio::net::TcpListener;
 use tracing::{Level, error, info};
 pub mod boom;
@@ -38,11 +37,23 @@ async fn setup(config: Config) -> Result<(), Box<dyn std::error::Error>> {
     dbg!(&config);
     grab_remote(config.bangs.default.remote, &config.bangs.default.filepath).await?;
 
-    let bangs = parse_bang_file(&config.bangs.default.filepath)
+    let mut bangs = parse_bang_file(&config.bangs.default.filepath)
         .map_err(|e| {
             error!("Could not parse bangs! {:?}", e);
         })
         .unwrap();
+    config
+        .bangs
+        .custom
+        .iter()
+        .for_each(|(short_name, custom_config)| {
+            bangs.push(Redirect {
+                short_name: short_name.clone(),
+                trigger: custom_config.trigger.clone(),
+                url_template: custom_config.template.clone(),
+            });
+        });
+
     let bangs_len = bangs.len();
     info!(
         name: "Boom",
