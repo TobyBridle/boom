@@ -1,22 +1,20 @@
 use std::time::Instant;
 
-use ntex::{
-    http::header::LOCATION,
-    web::{self, HttpRequest},
-};
+use axum::{extract::Query, response::Redirect};
+use serde::Deserialize;
 use tracing::info;
 
 use crate::boom::resolver::resolve;
 
-#[web::get("/")]
-pub async fn redirector(r: HttpRequest) -> Option<web::HttpResponse> {
-    let query = &urlencoding::decode(r.query_string()).ok()?[2..];
+#[derive(Deserialize)]
+pub struct SearchParams {
+    #[serde(rename = "q")]
+    query: String,
+}
+
+pub async fn redirector(Query(params): Query<SearchParams>) -> Redirect {
     let timer = Instant::now();
-    let resolved = resolve(query);
+    let resolved = resolve(params.query.as_str());
     info!("Redirecting to {resolved} took {:?}", timer.elapsed());
-    Some(
-        web::HttpResponse::PermanentRedirect()
-            .header(LOCATION, resolved)
-            .finish(),
-    )
+    Redirect::to(resolved.as_str())
 }

@@ -1,16 +1,21 @@
 use std::{
     fs::File,
     io::{self, BufReader, Read},
+    net::SocketAddr,
     time::Instant,
 };
 
+use axum::{Router, routing::get};
 use boom::{grab_remote_bangs::grab_remote, parse_bangs::parse_bang_file, resolver::resolve};
 use cache::{init_list, insert_bang};
 use clap::Parser;
 use cli::LaunchType;
 use config::{Config, parse_config::parse_config, read_config::read_config};
-use ntex::web;
-use routes::{bangs::list_bangs, index::redirector};
+use routes::{
+    bangs::list_bangs,
+    index::{self, redirector},
+};
+use tokio::net::TcpListener;
 use tracing::{Level, error, info};
 pub mod boom;
 pub mod cache;
@@ -55,7 +60,7 @@ async fn setup(config: Config) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-#[ntex::main]
+#[tokio::main]
 async fn main() -> std::io::Result<()> {
     tracing_subscriber::fmt()
         .with_max_level(if cfg!(debug_assertions) {
@@ -70,9 +75,6 @@ async fn main() -> std::io::Result<()> {
 
     let args = cli::Args::parse();
     let config = read_config(&args.config).expect("Config path should be valid & readable.");
-    rustls::crypto::ring::default_provider()
-        .install_default()
-        .expect("Failed to install rustls crypto provider");
 
     match args.launch {
         LaunchType::Serve { addr, port } => {
@@ -114,10 +116,20 @@ async fn main() -> std::io::Result<()> {
 pub async fn serve(address: &str, port: u16) {
     info!(name:"Boom", "Starting Web Server on {}:{}", address, port);
 
-    web::HttpServer::new(move || web::App::new().service(redirector).service(list_bangs))
-        .bind((address, port))
-        .expect("Address and port should be valid with no other applications using the same port.")
-        .run()
-        .await
-        .unwrap_or_else(|_| panic!("Could not bind to {address}:{port}"));
+    let router = Router::new()
+        .route("/", get(redirector))
+        .route("/bangs", get(list_bangs));
+
+    let addr = SocketAddr::new(
+        address.parse().expect("address should be a valid IpAddr"),
+        port,
+    );
+    let listener = match TcpListener::bind(addr).await {
+        Ok(listener) => listener,
+        Err(e) => {
+            return error!(name:"Boom", "Failed to bind to address {addr}. Reason: {e}");
+        }
+    };
+    info!(name:"Boom", "Server running on {addr}");
+    axum::serve(listener, router).await.unwrap();
 }

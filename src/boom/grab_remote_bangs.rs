@@ -1,24 +1,19 @@
 use std::{
-    fs::File,
+    fs::OpenOptions,
     io::{BufWriter, Write},
     path::PathBuf,
 };
 
-use futures_util::StreamExt;
-use ntex::http::Client;
+use reqwest::Client;
 
 pub async fn grab_remote(url: String, out: &PathBuf) -> Result<(), Box<dyn std::error::Error>> {
-    todo!()
-    // let client = Client::new();
-    // let mut res = client.get(url).send().await?;
-    // let mut body = res.take_payload();
-    //
-    // while let Some(chunk) = body.next().await {
-    //     let bytes = chunk?;
-    //     // Interpret as ASCII or UTF-8 text
-    //     let text = str::from_utf8(&bytes)?;
-    //     print!("{}", text); // or handle it however you want
-    // }
-    //
-    // Ok(())
+    let client = Client::new();
+    let mut res = client.get(url).send().await?;
+
+    let mut writer = BufWriter::new(OpenOptions::new().write(true).truncate(true).open(out)?);
+    while let Some(chunk) = res.chunk().await? {
+        let _ = writer.write(&chunk)?;
+    }
+
+    Ok(())
 }
