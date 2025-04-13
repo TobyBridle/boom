@@ -6,7 +6,7 @@ use std::{
 
 use reqwest::Client;
 
-pub async fn grab_remote(url: String, out: &PathBuf) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn grab_remote(url: &String, out: &PathBuf) -> Result<(), Box<dyn std::error::Error>> {
     let client = Client::new();
     let mut res = client.get(url).send().await?;
 

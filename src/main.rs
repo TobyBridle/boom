@@ -26,22 +26,23 @@ extern crate concat_string;
 
 #[inline]
 async fn setup(config: Config) -> Result<(), Box<dyn std::error::Error>> {
-    if !config.bangs.default.enabled {
+    let mut bangs = if config.bangs.default.enabled {
+        grab_remote(&config.bangs.default.remote, &config.bangs.default.filepath).await?;
+
+        parse_bang_file(&config.bangs.default.filepath)
+            .map_err(|e| {
+                error!("Could not parse bangs! {:?}", e);
+            })
+            .unwrap()
+    } else {
         info!("[bangs.default.enabled] = false");
-        return Ok(());
-    }
+        vec![]
+    };
 
     info!(name: "Boom", "Parsing Bangs!");
     let now = Instant::now();
 
     dbg!(&config);
-    grab_remote(config.bangs.default.remote, &config.bangs.default.filepath).await?;
-
-    let mut bangs = parse_bang_file(&config.bangs.default.filepath)
-        .map_err(|e| {
-            error!("Could not parse bangs! {:?}", e);
-        })
-        .unwrap();
     config
         .bangs
         .custom
