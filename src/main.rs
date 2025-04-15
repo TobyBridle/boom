@@ -1,63 +1,12 @@
-use std::{
-    fs::File,
-    io::{self, BufReader, Read},
-};
+use std::io;
 
-use boom_config::parse_config::parse_config;
+use boom_config::read_config::read_config;
 use boom_core::boom::resolver::resolve;
 use boom_web::serve;
 use clap::Parser;
 use cli::LaunchType;
 use tracing::{Level, error, info};
 pub mod cli;
-
-// #[inline]
-// async fn setup(config: Config) -> Result<(), Box<dyn std::error::Error>> {
-//     let mut bangs = if config.bangs.default.enabled {
-//         grab_remote(&config.bangs.default.remote, &config.bangs.default.filepath).await?;
-//
-//         parse_bang_file(&config.bangs.default.filepath)
-//             .map_err(|e| {
-//                 error!("Could not parse bangs! {:?}", e);
-//             })
-//             .unwrap()
-//     } else {
-//         info!("[bangs.default.enabled] = false");
-//         vec![]
-//     };
-//
-//     info!(name: "Boom", "Parsing Bangs!");
-//     let now = Instant::now();
-//
-//     dbg!(&config);
-//     config
-//         .bangs
-//         .custom
-//         .iter()
-//         .for_each(|(short_name, custom_config)| {
-//             bangs.push(Redirect {
-//                 short_name: short_name.clone(),
-//                 trigger: custom_config.trigger.clone(),
-//                 url_template: custom_config.template.clone(),
-//             });
-//         });
-//
-//     let bangs_len = bangs.len();
-//     info!(
-//         name: "Boom",
-//         "Parsed {} bangs in {:?}!",
-//         bangs_len,
-//         Instant::now().duration_since(now)
-//     );
-//
-//     init_list(bangs.clone(), false).ok();
-//
-//     bangs.iter().enumerate().for_each(|(idx, bang)| {
-//         insert_bang(bang.trigger.clone(), idx).unwrap();
-//     });
-//
-//     Ok(())
-// }
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
@@ -82,20 +31,17 @@ async fn main() -> std::io::Result<()> {
         }
         LaunchType::Validate { verbose } => {
             info!("Reading {}", &args.config.display());
-            let mut config_buffer = String::new();
-            let mut breader = BufReader::new(File::open(&args.config)?);
-            breader.read_to_string(&mut config_buffer)?;
-            match parse_config(config_buffer) {
+            match read_config(&args.config) {
                 Ok(cfg) => {
                     if verbose {
                         dbg!(cfg);
                     }
-                    info!("Parsed config with no errors.")
+                    info!("Parsed config with no errors.");
                 }
                 Err(e) => error!(e),
             }
         }
-    };
+    }
 
     Ok(())
 }

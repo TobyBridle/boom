@@ -20,7 +20,7 @@ macro_rules! parse_section {
 fn parse_server_config(table: &Item) -> ServerConfig {
     let default = ServerConfig::default();
 
-    let address = if let Some(address) = table.get("address") {
+    let address = table.get("address").map_or(default.address, |address| {
         assert!(
             address.is_str(),
             "[server.address] is expected to be an IpAddr"
@@ -31,128 +31,94 @@ fn parse_server_config(table: &Item) -> ServerConfig {
             "[server.address] is expected to be an IpAddr. Got {ip:?}"
         );
         ip.unwrap()
-    } else {
-        default.address
-    };
+    });
 
-    let port = if let Some(port) = table.get("port") {
+    let port = table.get("port").map_or(default.port, |port| {
         assert!(
             port.is_integer(),
             "[server.port] is expected to be a u16. Got {port:?}"
         );
-        port.as_integer().unwrap() as u16
-    } else {
-        default.port
-    };
+        u16::try_from(port.as_integer().unwrap())
+            .expect("[server.port] is expected to be a valid unsigned 16-bit integer.")
+    });
 
     ServerConfig { address, port }
 }
 
+#[allow(clippy::too_many_lines)]
 fn parse_bang_config(config: &Item) -> BangConfig {
     let default = BangConfig::default();
 
     // [bangs] root
-    let default_search_template = if let Some(default_template) =
-        config.get("default_search_template")
+    let default_search_template = config.get("default_search_template").map_or(default.default_search_template, |default_template| 
     {
         assert!(
             default_template.is_str(),
             "[bangs.default_search_template] is expected to be a string. Got {default_template:?}"
         );
         default_template.as_str().unwrap().to_string()
-    } else {
-        default.default_search_template
-    };
+    });
 
     // [bangs.default]
-    let default_bangs = if let Some(default_bangs) =
-        get_table!(config, "default", "[bangs.default] must be a table.")
-    {
-        let enabled = if let Some(enabled) = default_bangs.get("enabled") {
-            assert!(
-                enabled.is_bool(),
-                "[bangs.default.enabled] is expected to be a boolean. Got {enabled:?}"
-            );
-            enabled.as_bool().unwrap()
-        } else {
-            default.default.enabled
-        };
-        let filepath = if let Some(filepath) = default_bangs.get("filepath") {
-            assert!(
-                filepath.is_str(),
-                "[bangs.default.filepath] is expected to be a string. Got {filepath:?}"
-            );
-            if let Some(stripped) = filepath.as_str().unwrap().strip_prefix("~/") {
-                let home = home::home_dir().expect("$HOME should be accessible");
-                home.join(stripped)
-            } else {
-                PathBuf::from(filepath.as_str().unwrap())
-            }
-        } else {
-            default.default.filepath
-        };
-        let remote = if let Some(remote) = default_bangs.get("remote") {
-            assert!(
-                remote.is_str(),
-                "[bangs.default.remote] is expected to be a string. Got {remote:?}"
-            );
-            remote.as_str().unwrap().to_string()
-        } else {
-            default.default.remote
-        };
+    let default_bangs = get_table!(config, "default", "[bangs.default] must be a table.")
+        .map_or_else(BangDefaultConfig::default, |default_bangs| {
+            let enabled = default_bangs
+                .get("enabled")
+                .map_or(default.default.enabled, |enabled| {
+                    assert!(
+                        enabled.is_bool(),
+                        "[bangs.default.enabled] is expected to be a boolean. Got {enabled:?}"
+                    );
+                    enabled.as_bool().unwrap()
+                });
+            let filepath =
+                default_bangs
+                    .get("filepath")
+                    .map_or(default.default.filepath, |filepath| {
+                        assert!(
+                            filepath.is_str(),
+                            "[bangs.default.filepath] is expected to be a string. Got {filepath:?}"
+                        );
+                        filepath.as_str().unwrap().strip_prefix("~/").map_or_else(
+                            || PathBuf::from(filepath.as_str().unwrap()),
+                            |stripped| {
+                                let home = home::home_dir().expect("$HOME should be accessible");
+                                home.join(stripped)
+                            },
+                        )
+                    });
+            let remote = default_bangs
+                .get("remote")
+                .map_or(default.default.remote, |remote| {
+                    assert!(
+                        remote.is_str(),
+                        "[bangs.default.remote] is expected to be a string. Got {remote:?}"
+                    );
+                    remote.as_str().unwrap().to_string()
+                });
 
-        BangDefaultConfig {
-            enabled,
-            filepath,
-            remote,
-        }
-    } else {
-        BangDefaultConfig::default()
-    };
+            BangDefaultConfig {
+                enabled,
+                filepath,
+                remote,
+            }
+        });
 
     // [bangs.custom]
-    let custom_bangs = if let Some(custom_table) =
-        get_table!(config, "custom", "[bangs.custom] must be a table")
-    {
-        let mut map = HashMap::new();
+    let custom_bangs = get_table!(config, "custom", "[bangs.custom] must be a table").map_or_else(
+        HashMap::new,
+        |custom_table| {
+            let mut map = HashMap::new();
 
-        for (key, val) in custom_table.iter() {
-            if let Item::Table(inner) = val {
-                let template = inner
-                    .get("template")
-                    .expect("Template should exist for any given bang")
-                    .as_str()
-                    .unwrap();
-
-                let trigger = inner
-                    .get("trigger")
-                    .expect("Trigger should exist for any given bang")
-                    .as_str()
-                    .unwrap();
-
-                if !template.is_empty() && !trigger.is_empty() {
-                    map.insert(
-                        key.to_string(),
-                        BangCustomConfig {
-                            template: template.to_string(),
-                            trigger: trigger.to_string(),
-                        },
-                    );
-                }
-            } else if let Item::Value(_) = val {
-                if let Some(inline) = val.as_value().and_then(|v| v.as_inline_table()) {
-                    let mut temp = toml_edit::Table::new();
-                    for (k, v) in inline.iter() {
-                        temp.insert(k, v.clone().into());
-                    }
-
-                    let template = temp
+            for (key, val) in custom_table {
+                if let Item::Table(inner) = val {
+                    let template = inner
                         .get("template")
                         .expect("Template should exist for any given bang")
                         .as_str()
                         .unwrap();
 
-                    let trigger = temp
+                    let trigger = inner
                         .get("trigger")
                         .expect("Trigger should exist for any given bang")
                         .as_str()
@@ -167,14 +133,41 @@ fn parse_bang_config(config: &Item) -> BangConfig {
                             },
                         );
                     }
+                } else if let Item::Value(_) = val {
+                    if let Some(inline) = val.as_value().and_then(|v| v.as_inline_table()) {
+                        let mut temp = toml_edit::Table::new();
+                        for (k, v) in inline {
+                            temp.insert(k, v.clone().into());
+                        }
+
+                        let template = temp
+                            .get("template")
+                            .expect("Template should exist for any given bang")
+                            .as_str()
+                            .unwrap();
+
+                        let trigger = temp
+                            .get("trigger")
+                            .expect("Trigger should exist for any given bang")
+                            .as_str()
+                            .unwrap();
+
+                        if !template.is_empty() && !trigger.is_empty() {
+                            map.insert(
+                                key.to_string(),
+                                BangCustomConfig {
+                                    template: template.to_string(),
+                                    trigger: trigger.to_string(),
+                                },
+                            );
+                        }
+                    }
                 }
             }
-        }
 
-        map
-    } else {
-        HashMap::new()
-    };
+            map
+        },
+    );
 
     BangConfig {
         default_search_template,
@@ -183,7 +176,11 @@ fn parse_bang_config(config: &Item) -> BangConfig {
     }
 }
 
-pub fn parse_config(config: String) -> Result<Config, Box<dyn std::error::Error>> {
+/// Parses a config in the form of a string
+///
+/// # Panics
+/// If the contents of the string is not valid TOML/UTF-8
+pub fn parse_config(config: &str) -> Config {
     let config = config
         .parse::<toml_edit::DocumentMut>()
         .expect("Config should be valid TOML");
@@ -197,10 +194,10 @@ pub fn parse_config(config: String) -> Result<Config, Box<dyn std::error::Error>
 
     let bang_config = parse_section!(config, "bangs", parse_bang_config, BangConfig::default());
 
-    Ok(Config {
+    Config {
         server: server_config,
         bangs: bang_config,
-    })
+    }
 }
 
 mod test {
@@ -240,7 +237,7 @@ mod test {
             trigger = "amazedev"
         "#;
 
-        let parsed_config = parse_config(config.to_string()).unwrap();
+        let parsed_config = parse_config(config);
         dbg!(&parsed_config);
         assert_eq!(parsed_config.server, ServerConfig::default());
         assert_eq!(

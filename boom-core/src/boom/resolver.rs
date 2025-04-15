@@ -1,11 +1,11 @@
 use concat_string::concat_string;
 
-use crate::cache::{get_bang, get_redirects};
-
-use super::{
-    DEFAULT_SEARCH_INDEXES, DEFAULT_SEARCH_TEMPLATE, parse_bangs::parse_bang_indexes,
-    parse_templates::parse_template_indexes,
+use crate::{
+    boom::{DEFAULT_SEARCH_INDEXES, DEFAULT_SEARCH_TEMPLATE},
+    cache::{get_bang, get_redirects},
 };
+
+use super::{parse_bangs::parse_bang_indexes, parse_templates::parse_template_indexes};
 
 /// Resolves a url-decoded query to its correct search url
 ///
@@ -62,7 +62,7 @@ mod tests {
     #[allow(unused_imports)]
     use crate::{
         Redirect,
-        boom::resolver::resolve,
+        boom::{Match, resolver::resolve},
         cache::{init_list, insert_bang},
     };
 

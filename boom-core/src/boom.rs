@@ -5,8 +5,6 @@ pub mod resolver;
 
 use std::{cmp::max, ops::Range};
 
-use serde::{Deserialize, Serialize};
-
 pub static DEFAULT_SEARCH_TEMPLATE: &str = "https://google.com/search?q={{{s}}}";
 pub static DEFAULT_SEARCH_INDEXES: std::sync::LazyLock<Match> =
     std::sync::LazyLock::new(|| Match::new(28, DEFAULT_SEARCH_TEMPLATE.len()));

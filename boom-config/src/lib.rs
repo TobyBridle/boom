@@ -8,13 +8,13 @@ use serde::Deserialize;
 pub mod parse_config;
 pub mod read_config;
 
-#[derive(Deserialize, Default, Debug, PartialEq)]
+#[derive(Deserialize, Default, Debug, PartialEq, Eq)]
 pub struct Config {
     pub server: ServerConfig,
     pub bangs: BangConfig,
 }
 
-#[derive(Deserialize, Debug, PartialEq)]
+#[derive(Deserialize, Debug, PartialEq, Eq)]
 pub struct ServerConfig {
     pub address: IpAddr,
     pub port: u16,
@@ -29,7 +29,7 @@ impl Default for ServerConfig {
     }
 }
 
-#[derive(Deserialize, Debug, PartialEq)]
+#[derive(Deserialize, Debug, PartialEq, Eq)]
 pub struct BangConfig {
     pub default_search_template: String,
     pub default: BangDefaultConfig,
@@ -46,7 +46,7 @@ impl Default for BangConfig {
     }
 }
 
-#[derive(Deserialize, Debug, PartialEq)]
+#[derive(Deserialize, Debug, PartialEq, Eq)]
 pub struct BangDefaultConfig {
     pub enabled: bool,
     pub filepath: PathBuf,
@@ -63,7 +63,7 @@ impl Default for BangDefaultConfig {
     }
 }
 
-#[derive(Deserialize, Debug, PartialEq)]
+#[derive(Deserialize, Debug, PartialEq, Eq)]
 pub struct BangCustomConfig {
     pub template: String,
     pub trigger: String,

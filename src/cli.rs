@@ -3,6 +3,7 @@ use std::{env, path::PathBuf};
 use clap::{Parser, Subcommand, command};
 use serde::Serialize;
 
+#[must_use]
 pub fn get_default_config_path() -> PathBuf {
     let home_dir = env::var("HOME").unwrap_or_else(|_| ".".to_string());
     PathBuf::from(&home_dir)
@@ -11,6 +12,7 @@ pub fn get_default_config_path() -> PathBuf {
         .join("config.toml")
 }
 
+#[must_use]
 pub fn get_default_bang_path() -> PathBuf {
     let home_dir = env::var("HOME").unwrap_or_else(|_| ".".to_string());
     PathBuf::from(&home_dir)
