@@ -1,5 +1,6 @@
 use std::env;
 
+use boom_config::Config;
 use boom_core::{
     boom::{parse_bangs::parse_bang_file, resolver::resolve},
     cache::{init_list, insert_bang},
@@ -35,5 +36,5 @@ const STRINGS: [&str; 9] = [
 #[divan::bench(args = STRINGS, sample_count = 10_000)]
 fn bench_resolve(query: &str) {
     #[allow(unused_must_use)]
-    resolve(query);
+    resolve(query, Config::default());
 }

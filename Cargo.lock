@@ -249,6 +249,7 @@ dependencies = [
 name = "boom-core"
 version = "0.1.0"
 dependencies = [
+ "boom-config",
  "concat-string",
  "reqwest",
  "serde",
@@ -262,6 +263,7 @@ version = "0.1.0"
 dependencies = [
  "axum",
  "axum-template",
+ "boom-config",
  "boom-core",
  "handlebars",
  "serde",

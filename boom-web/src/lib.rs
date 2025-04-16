@@ -1,7 +1,11 @@
-use std::net::SocketAddr;
+use std::{
+    net::SocketAddr,
+    sync::{Arc, RwLock},
+};
 
 use axum::{Router, routing::get};
 use axum_template::engine::Engine;
+use boom_config::Config;
 use handlebars::Handlebars;
 use routes::{bangs::list_bangs, index::redirector};
 use tokio::net::TcpListener;
@@ -15,13 +19,14 @@ type AppEngine = Engine<Handlebars<'static>>;
 #[derive(Clone)]
 pub struct AppState {
     engine: AppEngine,
+    shared_config: Arc<RwLock<Config>>,
 }
 
 /// Serve the web server on `address` and `port`
 ///
 /// # Panics
 /// Panics if the server could not bind to the desired address/port.
-pub async fn serve(address: &str, port: u16) {
+pub async fn serve(address: &str, port: u16, config: Config) {
     info!(name:"Boom", "Starting Web Server on {}:{}", address, port);
 
     let mut hbs = Handlebars::new();
@@ -34,6 +39,7 @@ pub async fn serve(address: &str, port: u16) {
         .nest_service("/assets", ServeDir::new("assets"))
         .with_state(AppState {
             engine: Engine::from(hbs),
+            shared_config: Arc::new(RwLock::new(config)),
         });
 
     let addr = SocketAddr::new(

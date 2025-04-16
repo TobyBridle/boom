@@ -7,6 +7,7 @@ repository.workspace = true
 edition.workspace = true
 
 [dependencies]
+boom-config = { path = "../boom-config/" }
 concat-string = "1.0.1"
 serde.workspace = true
 serde_json.workspace = true

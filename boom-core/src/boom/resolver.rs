@@ -1,7 +1,8 @@
+use boom_config::Config;
 use concat_string::concat_string;
 
 use crate::{
-    boom::{DEFAULT_SEARCH_INDEXES, DEFAULT_SEARCH_TEMPLATE},
+    boom::Match,
     cache::{get_bang, get_redirects},
 };
 
@@ -12,15 +13,20 @@ use super::{parse_bangs::parse_bang_indexes, parse_templates::parse_template_ind
 /// # Panics
 /// Panics if the query is an empty string.
 #[must_use]
-pub fn resolve(query: &str) -> String {
+pub fn resolve(query: &str, config: Config) -> String {
     assert!(!query.is_empty());
+
+    let template = config.bangs.default_search_template.as_str();
+    let indexes = parse_template_indexes(template).map_or_else(Match::default, |matches| {
+        matches.first().cloned().unwrap_or_default()
+    });
 
     parse_bang_indexes(query).map_or_else(
         || {
             concat_string!(
-                DEFAULT_SEARCH_TEMPLATE[..DEFAULT_SEARCH_INDEXES.start],
+                template[..indexes.start],
                 urlencoding::encode(query),
-                DEFAULT_SEARCH_TEMPLATE[DEFAULT_SEARCH_INDEXES.end..]
+                template[indexes.end..]
             )
         },
         |bang_idx| {
@@ -60,6 +66,9 @@ pub fn resolve(query: &str) -> String {
 
 mod tests {
     #[allow(unused_imports)]
+    use boom_config::Config;
+
+    #[allow(unused_imports)]
     use crate::{
         Redirect,
         boom::{Match, resolver::resolve},
@@ -69,7 +78,10 @@ mod tests {
     #[test]
     fn test_resolve_no_bang() {
         let query = "test query";
-        assert_eq!(resolve(query), "https://google.com/search?q=test%20query");
+        assert_eq!(
+            resolve(query, Config::default()),
+            "https://google.com/search?q=test%20query"
+        );
     }
 
     #[test]
@@ -87,7 +99,7 @@ mod tests {
 
         let query = "!yt test query";
         assert_eq!(
-            resolve(query),
+            resolve(query, Config::default()),
             "https://youtube.com/results?search_query=test%20query"
         );
     }
@@ -105,7 +117,7 @@ mod tests {
         .unwrap();
         let query = "test query !yt";
         assert_eq!(
-            resolve(query),
+            resolve(query, Config::default()),
             "https://youtube.com/results?search_query=test%20query"
         );
     }

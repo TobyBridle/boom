@@ -10,6 +10,7 @@ edition.workspace = true
 axum = "0.8.3"
 axum-template = { version = "3.0.0", features = ["handlebars"] }
 boom-core = { path = "../boom-core" }
+boom-config = { path = "../boom-config/" }
 handlebars = "6.3.2"
 serde.workspace = true
 tokio.workspace = true

@@ -55,6 +55,12 @@ pub enum LaunchType {
     },
 }
 
+impl LaunchType {
+    pub fn requires_setup(&self) -> bool {
+        matches!(self, Self::Serve { .. } | Self::Resolve { .. })
+    }
+}
+
 /// Processor for [DuckDuckGo Bang](https://duckduckgo.com/bangs) Parsing
 #[derive(Parser, Debug, Clone)]
 #[command(version, about, long_about = None)]
