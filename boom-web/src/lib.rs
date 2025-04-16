@@ -36,7 +36,7 @@ pub async fn serve(address: &str, port: u16, config: Config) {
     let router = Router::new()
         .route("/", get(redirector))
         .route("/bangs", get(list_bangs))
-        .nest_service("/assets", ServeDir::new("assets"))
+        .nest_service("/assets", ServeDir::new("boom-web/assets"))
         .with_state(AppState {
             engine: Engine::from(hbs),
             shared_config: Arc::new(RwLock::new(config)),
