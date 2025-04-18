@@ -1,5 +1,5 @@
 
-<img src="https://github.com/user-attachments/assets/61e33a4d-c937-4451-aa81-a2c4cbad3b18" width="900" height="400" />
+![boom logo](https://github.com/user-attachments/assets/61e33a4d-c937-4451-aa81-a2c4cbad3b18)
 
 # Boom
 
