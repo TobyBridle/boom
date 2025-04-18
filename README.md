@@ -103,13 +103,13 @@ trigger = "amazedev"
 Clone the project
 
 ```bash
-  git clone https://github.com/tobybridle/boom
+git clone https://github.com/tobybridle/boom
 ```
 
 Go to the project directory
 
 ```bash
-  cd boom
+cd boom
 ```
 
 ### Building/Installing
@@ -143,6 +143,7 @@ The reason `boom` was ever created is due to the likes of two awesome people.\
 Check out their implementations below:
 - [Adolar0042](https://github.com/adolar0042) and his awesome [__redirector__](https://github.com/adolar0042/redirector)
 - [rebelonion](https://github.com/rebelonion) and his insanely-fast C++ implementation of DDG Bangs - [BangServer](https://github.com/rebelonion/bangserver)
+
 Of course, without the long exhaustive list of bangs created by [DuckDuckGo](https://duckduckgo.com/bang.js) themselves, and the idea, this would not exist.
 ## License
 
