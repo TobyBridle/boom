@@ -8,7 +8,7 @@ use boom_core::{
 };
 use boom_web::serve;
 use clap::Parser;
-use cli::LaunchType;
+use cli::{LaunchType, SetupMode};
 use tracing::{Level, error, info};
 pub mod cli;
 
@@ -28,33 +28,35 @@ async fn main() -> std::io::Result<()> {
     let args = cli::Args::parse();
     let config = read_config(&args.config).expect("Config path should be valid & readable.");
 
-    if args.launch.requires_setup() {
-        let mut bangs = if config.bangs.default.enabled {
+    let setup = args.launch.setup_type();
+
+    let mut bangs = if config.bangs.default.enabled {
+        if matches!(setup, SetupMode::All) || !config.bangs.default.filepath.try_exists()? {
             download_remote(&config.bangs.default.remote, &config.bangs.default.filepath)
                 .await
                 .expect("Remote should be valid and accessible");
-            parse_bang_file(&config.bangs.default.filepath)
-                .expect("Should be able to read bang file")
-        } else {
-            vec![]
-        };
-        config.bangs.custom.iter().for_each(|(short_name, custom)| {
-            bangs.push(Redirect {
-                short_name: short_name.clone(),
-                trigger: custom.trigger.clone(),
-                url_template: custom.template.clone(),
-            })
-        });
-        bangs.iter().enumerate().for_each(|(i, r)| {
-            insert_bang(r.trigger.clone(), i)
-                .expect("Bang should not already exist within the cache");
-        });
-        set_redirects(bangs).unwrap();
-    }
+        }
+
+        parse_bang_file(&config.bangs.default.filepath).expect("Should be able to read bang file")
+    } else {
+        vec![]
+    };
+
+    config.bangs.custom.iter().for_each(|(short_name, custom)| {
+        bangs.push(Redirect {
+            short_name: short_name.clone(),
+            trigger: custom.trigger.clone(),
+            url_template: custom.template.clone(),
+        })
+    });
+    bangs.iter().enumerate().for_each(|(i, r)| {
+        insert_bang(r.trigger.clone(), i).expect("Bang should not already exist within the cache");
+    });
+    set_redirects(bangs).unwrap();
 
     match args.launch {
         LaunchType::Serve { addr, port } => serve(addr.as_str(), port, config).await,
-        LaunchType::Resolve { search_query } => {
+        LaunchType::Resolve { search_query, .. } => {
             println!("Resolved: {:?}", resolve(search_query.as_str(), config));
         }
         LaunchType::Validate { verbose } => {

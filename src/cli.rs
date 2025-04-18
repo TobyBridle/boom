@@ -46,6 +46,10 @@ pub enum LaunchType {
         /// E.g, !d blazing fast
         #[arg(required = true)]
         search_query: String,
+
+        /// Redownloads any required bangs instead of relying on the cache
+        #[arg(long, default_value_t = false)]
+        no_cache: bool,
     },
 
     /// Validate the configuration
@@ -55,9 +59,26 @@ pub enum LaunchType {
     },
 }
 
+#[derive(PartialEq, Eq)]
+pub(crate) enum SetupMode {
+    All,
+    Caches,
+    NoSetup,
+}
+
 impl LaunchType {
-    pub fn requires_setup(&self) -> bool {
-        matches!(self, Self::Serve { .. } | Self::Resolve { .. })
+    pub(crate) fn setup_type(&self) -> SetupMode {
+        match self {
+            LaunchType::Serve { .. } => SetupMode::All,
+            LaunchType::Resolve { no_cache, .. } => {
+                if *no_cache {
+                    SetupMode::All
+                } else {
+                    SetupMode::Caches
+                }
+            }
+            LaunchType::Validate { .. } => SetupMode::NoSetup,
+        }
     }
 }
 
