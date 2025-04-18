@@ -24,7 +24,7 @@ input {
 }
 
 input:focus {
-  border: 1px solid #be95ff;
+  outline: 1px solid #be95ff;
 }
 
 input::placeholder {
