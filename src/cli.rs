@@ -13,15 +13,6 @@ pub fn get_default_config_path() -> PathBuf {
         .join("config.toml")
 }
 
-#[must_use]
-pub fn get_default_bang_path() -> PathBuf {
-    let home_dir = env::var("HOME").unwrap_or_else(|_| ".".to_string());
-    PathBuf::from(&home_dir)
-        .join(".cache")
-        .join("boom")
-        .join("bangs.json")
-}
-
 #[derive(Subcommand, Clone, Debug, Serialize)]
 pub enum LaunchType {
     /// Launch the redirecting server
