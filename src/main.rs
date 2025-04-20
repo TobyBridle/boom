@@ -1,4 +1,4 @@
-use std::io;
+use std::{io, sync::Arc};
 
 use boom_config::read_config::read_config;
 use boom_core::{
@@ -8,7 +8,7 @@ use boom_core::{
 };
 use boom_web::serve;
 use clap::Parser;
-use cli::{LaunchType, SetupMode};
+use cli::{LaunchType, SetupMode, merge_with_config};
 use tracing::{Level, error, info};
 pub mod cli;
 
@@ -25,8 +25,11 @@ async fn main() -> std::io::Result<()> {
         .with_writer(io::stderr)
         .init();
 
-    let args = cli::Args::parse();
-    let config = read_config(&args.config).expect("Config path should be valid & readable.");
+    let args = Arc::new(cli::Args::parse());
+    let config = merge_with_config(
+        &args,
+        read_config(&args.config).expect("Config path should be valid & readable."),
+    );
 
     let setup = args.launch.setup_type();
 
@@ -47,23 +50,28 @@ async fn main() -> std::io::Result<()> {
             short_name: short_name.clone(),
             trigger: custom.trigger.clone(),
             url_template: custom.template.clone(),
-        })
+        });
     });
     bangs.iter().enumerate().for_each(|(i, r)| {
         insert_bang(r.trigger.clone(), i).expect("Bang should not already exist within the cache");
     });
     set_redirects(bangs).unwrap();
 
-    match args.launch {
-        LaunchType::Serve { addr, port } => serve(addr.as_str(), port, config).await,
+    match &args.launch {
+        LaunchType::Serve {
+            addr,
+            port,
+        } => {
+            serve(*addr, *port, &config).await;
+        }
         LaunchType::Resolve { search_query, .. } => {
-            println!("Resolved: {:?}", resolve(search_query.as_str(), config));
+            println!("Resolved: {:?}", resolve(search_query.as_str(), &config));
         }
         LaunchType::Validate { verbose } => {
             info!("Reading {}", &args.config.display());
             match read_config(&args.config) {
                 Ok(cfg) => {
-                    if verbose {
+                    if *verbose {
                         dbg!(cfg);
                     }
                     info!("Parsed config with no errors.");

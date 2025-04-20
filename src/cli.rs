@@ -1,5 +1,6 @@
 use std::{env, net::IpAddr, path::PathBuf};
 
+use boom_config::Config;
 use clap::{Parser, Subcommand, command};
 use serde::Serialize;
 
@@ -92,4 +93,20 @@ pub struct Args {
     /// Path to the configuration file to validate
     #[arg(short, long, default_value = get_default_config_path().into_os_string())]
     pub config: PathBuf,
+}
+
+#[must_use]
+pub const fn merge_with_config(args: &Args, mut config: Config) -> Config {
+    match args.launch {
+        LaunchType::Serve {
+            addr,
+            port,
+            await_internet,
+        } => {
+            config.server.address = addr;
+            config.server.port = port;
+            config
+        }
+        _ => config,
+    }
 }
