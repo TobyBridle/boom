@@ -42,7 +42,24 @@ fn parse_server_config(table: &Item) -> ServerConfig {
             .expect("[server.port] is expected to be a valid unsigned 16-bit integer.")
     });
 
-    ServerConfig { address, port }
+    let wait_for_internet = table.get("wait_for_internet").map_or(
+        default.wait_for_internet,
+        |wait_for_internet| {
+            assert!(
+                wait_for_internet.is_bool(),
+                "[server.wait_for_internet] is expected to be a boolean. Got {wait_for_internet:?}"
+            );
+            wait_for_internet
+                .as_bool()
+                .expect("[server.wait_for_internet] is expected to be a valid boolean.")
+        },
+    );
+
+    ServerConfig {
+        address,
+        port,
+        wait_for_internet,
+    }
 }
 
 #[allow(clippy::too_many_lines)]

@@ -18,6 +18,7 @@ pub struct Config {
 pub struct ServerConfig {
     pub address: IpAddr,
     pub port: u16,
+    pub wait_for_internet: bool,
 }
 
 impl Default for ServerConfig {
@@ -25,6 +26,7 @@ impl Default for ServerConfig {
         Self {
             address: IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
             port: 3000,
+            wait_for_internet: false,
         }
     }
 }

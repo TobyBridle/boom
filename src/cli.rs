@@ -39,6 +39,12 @@ pub enum LaunchType {
         /// e.g 3000 -> localhost:3000
         #[arg(short, long, default_value_t = 3000)]
         port: u16,
+
+        /// Wait for the connection to be valid
+        /// before attempting to start serving
+        /// instead of panicking
+        #[arg(short = 'w', long, default_value_t = false)]
+        await_internet: bool,
     },
 
     /// Test the resolution of a search query
@@ -105,6 +111,7 @@ pub const fn merge_with_config(args: &Args, mut config: Config) -> Config {
         } => {
             config.server.address = addr;
             config.server.port = port;
+            config.server.wait_for_internet = await_internet;
             config
         }
         _ => config,

@@ -1,6 +1,8 @@
 [server]
 address = "127.0.0.1"
 port = 3000
+# Wait for the internet connection to be valid before attempting to serve
+wait_for_internet = false
 
 [bangs]
 # The entirety of `{{{s}}}` will be replaced with the search term

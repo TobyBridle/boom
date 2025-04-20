@@ -61,7 +61,12 @@ async fn main() -> std::io::Result<()> {
         LaunchType::Serve {
             addr,
             port,
+            await_internet,
         } => {
+            if *await_internet {
+                boom_core::await_internet().await;
+            }
+
             serve(*addr, *port, &config).await;
         }
         LaunchType::Resolve { search_query, .. } => {
