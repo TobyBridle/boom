@@ -23,7 +23,7 @@ pub async fn redirector(
     let timer = Instant::now();
     let resolved = resolve(
         params.query.as_str(),
-        state
+        &state
             .shared_config
             .read()
             .expect("Shared Config should not be poisoned")

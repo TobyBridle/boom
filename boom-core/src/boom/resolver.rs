@@ -13,12 +13,12 @@ use super::{parse_bangs::parse_bang_indexes, parse_templates::parse_template_ind
 /// # Panics
 /// Panics if the query is an empty string.
 #[must_use]
-pub fn resolve(query: &str, config: Config) -> String {
+pub fn resolve(query: &str, config: &Config) -> String {
     assert!(!query.is_empty());
 
     let template = config.bangs.default_search_template.as_str();
     let indexes = parse_template_indexes(template).map_or_else(Match::default, |matches| {
-        matches.first().cloned().unwrap_or_default()
+        matches.first().copied().unwrap_or_default()
     });
 
     parse_bang_indexes(query).map_or_else(
@@ -79,7 +79,7 @@ mod tests {
     fn test_resolve_no_bang() {
         let query = "test query";
         assert_eq!(
-            resolve(query, Config::default()),
+            resolve(query, &Config::default()),
             "https://google.com/search?q=test%20query"
         );
     }
@@ -99,7 +99,7 @@ mod tests {
 
         let query = "!yt test query";
         assert_eq!(
-            resolve(query, Config::default()),
+            resolve(query, &Config::default()),
             "https://youtube.com/results?search_query=test%20query"
         );
     }
@@ -117,7 +117,7 @@ mod tests {
         .unwrap();
         let query = "test query !yt";
         assert_eq!(
-            resolve(query, Config::default()),
+            resolve(query, &Config::default()),
             "https://youtube.com/results?search_query=test%20query"
         );
     }

@@ -1,4 +1,4 @@
-use std::{env, path::PathBuf};
+use std::{env, net::IpAddr, path::PathBuf};
 
 use clap::{Parser, Subcommand, command};
 use serde::Serialize;
@@ -33,7 +33,7 @@ pub enum LaunchType {
     Serve {
         /// The address to run the server on
         #[arg(long, default_value = String::from("127.0.0.1"))]
-        addr: String,
+        addr: IpAddr,
         /// The port to run the server on
         /// e.g 3000 -> localhost:3000
         #[arg(short, long, default_value_t = 3000)]

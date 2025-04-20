@@ -36,5 +36,5 @@ const STRINGS: [&str; 9] = [
 #[divan::bench(args = STRINGS, sample_count = 10_000)]
 fn bench_resolve(query: &str) {
     #[allow(unused_must_use)]
-    resolve(query, Config::default());
+    resolve(query, &Config::default());
 }

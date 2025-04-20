@@ -1,5 +1,5 @@
 use std::{
-    net::SocketAddr,
+    net::{IpAddr, SocketAddr},
     sync::{Arc, RwLock},
 };
 
@@ -26,7 +26,7 @@ pub struct AppState {
 ///
 /// # Panics
 /// Panics if the server could not bind to the desired address/port.
-pub async fn serve(address: &str, port: u16, config: Config) {
+pub async fn serve(address: IpAddr, port: u16, config: &Config) {
     info!(name:"Boom", "Starting Web Server on {}:{}", address, port);
 
     let mut hbs = Handlebars::new();
@@ -39,13 +39,10 @@ pub async fn serve(address: &str, port: u16, config: Config) {
         .nest_service("/assets", ServeDir::new("boom-web/assets"))
         .with_state(AppState {
             engine: Engine::from(hbs),
-            shared_config: Arc::new(RwLock::new(config)),
+            shared_config: Arc::new(RwLock::new(config.clone())),
         });
 
-    let addr = SocketAddr::new(
-        address.parse().expect("address should be a valid IpAddr"),
-        port,
-    );
+    let addr = SocketAddr::new(address, port);
     let listener = match TcpListener::bind(addr).await {
         Ok(listener) => listener,
         Err(e) => {
