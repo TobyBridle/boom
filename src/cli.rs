@@ -74,17 +74,17 @@ pub(crate) enum SetupMode {
 }
 
 impl LaunchType {
-    pub(crate) fn setup_type(&self) -> SetupMode {
+    pub(crate) const fn setup_type(&self) -> SetupMode {
         match self {
-            LaunchType::Serve { .. } => SetupMode::All,
-            LaunchType::Resolve { no_cache, .. } => {
+            Self::Serve { .. } => SetupMode::All,
+            Self::Resolve { no_cache, .. } => {
                 if *no_cache {
                     SetupMode::All
                 } else {
                     SetupMode::Caches
                 }
             }
-            LaunchType::Validate { .. } => SetupMode::NoSetup,
+            Self::Validate { .. } => SetupMode::NoSetup,
         }
     }
 }
