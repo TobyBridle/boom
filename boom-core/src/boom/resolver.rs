@@ -1,3 +1,5 @@
+use std::process::exit;
+
 use boom_config::Config;
 use concat_string::concat_string;
 
@@ -38,9 +40,10 @@ pub fn resolve(query: &str, config: &Config) -> String {
             );
             let encoded_query = urlencoding::encode(query.as_str());
 
-            let redirect_idx = get_bang(bang)
-                .unwrap()
-                .expect("Expected all entries to be available in cache");
+            let redirect_idx = get_bang(bang).unwrap().unwrap_or_else(|| {
+                eprintln!("Entry was not found within the cache.");
+                exit(1)
+            });
             let mut template = get_redirects().expect("Redirect list should be initialised")
                 [redirect_idx]
                 .url_template

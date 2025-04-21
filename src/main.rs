@@ -1,6 +1,6 @@
-use std::{io, sync::Arc};
+use std::{io, process::exit, sync::Arc};
 
-use boom_config::read_config::read_config;
+use boom_config::{Config, read_config::read_config};
 use boom_core::{
     Redirect,
     boom::{grab_remote_bangs::download_remote, parse_bangs::parse_bang_file, resolver::resolve},
@@ -28,7 +28,11 @@ async fn main() -> std::io::Result<()> {
     let args = Arc::new(cli::Args::parse());
     let config = merge_with_config(
         &args,
-        read_config(&args.config).expect("Config path should be valid & readable."),
+        read_config(&args.config).unwrap_or_else(|e| {
+            eprintln!("Could not read Config. Reason: {e:?}");
+            eprintln!("Falling back to default config.");
+            Config::default()
+        }),
     );
 
     let setup = args.launch.setup_type();
@@ -37,10 +41,13 @@ async fn main() -> std::io::Result<()> {
         if matches!(setup, SetupMode::All) || !config.bangs.default.filepath.try_exists()? {
             download_remote(&config.bangs.default.remote, &config.bangs.default.filepath)
                 .await
-                .expect("Remote should be valid and accessible");
+                .unwrap_or_else(|e| eprintln!("Could not fetch bangs from remote. Continuing without default bangs.\nError: {e:?}"));
         }
 
-        parse_bang_file(&config.bangs.default.filepath).expect("Should be able to read bang file")
+        parse_bang_file(&config.bangs.default.filepath).unwrap_or_else(|e| {
+            eprintln!("Could not read bang file. Error: {e:?}");
+            exit(1);
+        })
     } else {
         vec![]
     };
@@ -53,7 +60,12 @@ async fn main() -> std::io::Result<()> {
         });
     });
     bangs.iter().enumerate().for_each(|(i, r)| {
-        insert_bang(r.trigger.clone(), i).expect("Bang should not already exist within the cache");
+        insert_bang(r.trigger.clone(), i).unwrap_or_else(|_| {
+            eprintln!(
+                "Bang ({}) should not already exist within the cache",
+                r.trigger
+            );
+        });
     });
     set_redirects(bangs).unwrap();
 
