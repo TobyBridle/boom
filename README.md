@@ -7,23 +7,25 @@ A lightweight and high-speed server for processing [DuckDuckGo Bangs](https://du
 
 ## Usage/Examples
 
-**IMPORTANT: `serve` USES TEMPLATING FILES RELATIVE TO THE EXECUTABLE.**
+**IMPORTANT: `serve` USES TEMPLATING FILES RELATIVE TO THE EXECUTABLE.**\
 For example, when using boom as a `systemd` service:
 
 ```
 [Unit]
 Description=Boom Redirection Service (DuckDuckGo bangs to real search)
-After=network-online.target
+After=network.target
 
 [Service]
 ExecStart=%h/.cargo/bin/boom serve
 Restart=on-failure
-WorkingDirectory=/home/tobybridle/boom # <--- note this
+WorkingDirectory=%h/boom # <--- note this
 Environment=RUST_LOG=info
 
 [Install]
 WantedBy=default.target
 ```
+
+### Common Examples
 
 ```bash
 # Launch boom with the default port & address
@@ -33,6 +35,10 @@ boom serve
 
 # Launch boom on port 3001
 boom serve -p 3001
+
+# Useful when launching boom at startup
+# Waits for a valid internet connection instead of panicking
+boom serve --await-internet
 
 # Launch boom using a temporary config
 boom -c test_config.toml serve
