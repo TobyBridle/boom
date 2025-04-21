@@ -1,5 +1,3 @@
-use std::process::exit;
-
 use boom_config::Config;
 use concat_string::concat_string;
 
@@ -27,7 +25,7 @@ pub fn resolve(query: &str, config: &Config) -> String {
         || {
             concat_string!(
                 template[..indexes.start],
-                urlencoding::encode(query),
+                urlencoding::encode(query).replace("%2F", "/"),
                 template[indexes.end..]
             )
         },
@@ -38,7 +36,7 @@ pub fn resolve(query: &str, config: &Config) -> String {
                 query[..(bang_idx.start).max(1) - 1],
                 &query[(bang_idx.end + 1).clamp(1, query.len())..]
             );
-            let encoded_query = urlencoding::encode(query.as_str());
+            let encoded_query = urlencoding::encode(query.as_str()).replace("%2F", "/");
 
             let redirect_idx = match get_bang(bang).unwrap() {
                 Some(idx) => idx,
@@ -48,7 +46,7 @@ pub fn resolve(query: &str, config: &Config) -> String {
                     );
                     return concat_string!(
                         template[..indexes.start],
-                        urlencoding::encode(&query),
+                        encoded_query,
                         template[indexes.end..]
                     );
                 }
@@ -131,6 +129,26 @@ mod tests {
         assert_eq!(
             resolve(query, &Config::default()),
             "https://youtube.com/results?search_query=test%20query"
+        );
+    }
+
+    #[test]
+    fn test_resolve_bang_slash() {
+        init_list(
+            vec![Redirect {
+                short_name: "GitHub".to_string(),
+                trigger: "gh".to_string(),
+                url_template: "https://github.com/{{{s}}}".to_string(),
+            }],
+            true,
+        )
+        .unwrap();
+        insert_bang("gh".to_string(), 1).unwrap();
+
+        let query = "tobybridle/boom !gh";
+        assert_eq!(
+            resolve(query, &Config::default()),
+            "https://github.com/tobybridle/boom"
         );
     }
 }
