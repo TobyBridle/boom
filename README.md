@@ -5,6 +5,22 @@
 
 A lightweight and high-speed server for processing [DuckDuckGo Bangs](https://duckduckgo/bang.js).
 
+<table>
+<th>
+  
+Partly inspired by Theo's video on [Unduck](https://www.youtube.com/watch?v=_DnNzRaBWUU), `boom` provides the same, if not more, functionality.
+Funnily enough, Theo recently made a video debating whether or not
+tools should be rewritten in other languages - particularly Rust. Rust is the language that powers `boom`.
+
+</th>
+
+<th>
+
+[![Video Thumbnail](http://img.youtube.com/vi/CvXsGWDozRw/0.jpg)](https://www.youtube.com/watch?v=CvXsGWDozRw "JavaScript is fast enough (don't rewrite your code)")
+
+</th>
+</table>
+
 ## Usage/Examples
 
 **IMPORTANT: `serve` USES TEMPLATING FILES RELATIVE TO THE EXECUTABLE.**\
