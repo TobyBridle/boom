@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "checkJs": true,
+    "allowJs": true,
+    "lib": ["es2023", "dom"],
+    "noEmit": true
+  },
+  "include": ["./**/*.js", "assets/bangs/index.d.ts"]
+}

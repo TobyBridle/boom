@@ -13,6 +13,7 @@ use routes::{bangs::list_bangs, index::redirector};
 use serde::Serialize;
 use tokio::net::TcpListener;
 use tower_http::services::ServeDir;
+use tower_http::services::{ServeDir, ServeFile};
 use tracing::{error, info};
 
 mod routes;

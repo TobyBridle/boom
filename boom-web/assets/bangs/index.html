@@ -1,3 +1,4 @@
+<!doctype html>
 <html>
   <head>
     <link rel="stylesheet" type="text/css" href="/assets/bangs/style.css" />
@@ -22,10 +23,41 @@
   </head>
   <body>
     <nav>
-      <button>Add Bang</button>
-      <input type="text" id="filterInput" placeholder="SEARCH BANGS" />
+      <div class="bang-search">
+        <input
+          type="text"
+          id="filterInput"
+          placeholder="SEARCH BANGS"
+          name="bang-search"
+        />
+        <label for="bang-search">
+          <?xml version="1.0" ?><svg
+            class="feather feather-search"
+            fill="none"
+            height="24"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" x2="16.65" y1="21" y2="16.65" />
+          </svg>
+        </label>
+      </div>
     </nav>
-    <table>
+
+    <h1 id="all">All {{len bangs}} Bang(s)</h1>
+    <div id="all-pagination">
+      <button id="prev">&lt;</button>
+      <span id="page-info"></span>
+      <button id="next">&gt;</button>
+    </div>
+
+    <table id="bangs">
       <thead>
         <tr>
           <th>Short</th>
@@ -34,48 +66,12 @@
         </tr>
       </thead>
 
-      <tbody>
-        {{#each bangs}}
-        <tr style="--row-text: '{{this.s}} {{this.t}} {{this.u}}';">
-          <td>{{this.s}}</td>
-          <td>{{this.t}}</td>
-          <td>{{this.u}}</td>
-        </tr>
-        {{/each}}
-      </tbody>
+      <tbody></tbody>
     </table>
 
-    <script>
-      const input = document.getElementById("filterInput");
-      const rows = document.querySelectorAll("table tbody tr");
-      let debounceTimer;
-
-      // Listen for input change to filter rows
-      function filterRows() {
-        const filterText = input.value.toLowerCase();
-
-        rows.forEach((row) => {
-          // Retrieve the text stored in --row-text and check if it matches the filter
-          const rowText = row.style
-            .getPropertyValue("--row-text")
-            .toLowerCase();
-
-          // Toggle row visibility based on whether it matches the filter
-          if (rowText.includes(filterText)) {
-            row.style.display = ""; // Show the row
-          } else {
-            row.style.display = "none"; // Hide the row
-          }
-        });
-      }
-
-      input.addEventListener("input", () => {
-        // Clear the previous debounce timer if any
-        clearTimeout(debounceTimer);
-
-        // Set a new timer for 300ms
-        debounceTimer = setTimeout(filterRows, 300);
-      });
+    <script type="application/json" id="bang-data">
+      {{{json bangs}}}
     </script>
+    <script type="module" src="/assets/bangs/index.js"></script>
   </body>
 </html>
