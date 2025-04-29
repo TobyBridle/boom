@@ -220,7 +220,7 @@ dependencies = [
 
 [[package]]
 name = "boom"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "allocation-counter",
  "boom-config",
@@ -247,19 +247,20 @@ dependencies = [
 
 [[package]]
 name = "boom-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "boom-config",
  "concat-string",
  "reqwest",
  "serde",
  "serde_json",
+ "tracing",
  "urlencoding",
 ]
 
 [[package]]
 name = "boom-web"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "axum",
  "axum-template",
@@ -267,6 +268,7 @@ dependencies = [
  "boom-core",
  "handlebars",
  "serde",
+ "serde_json",
  "tokio",
  "tower",
  "tower-http",

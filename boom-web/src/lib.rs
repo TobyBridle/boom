@@ -6,8 +6,11 @@ use std::{
 use axum::{Router, routing::get};
 use axum_template::engine::Engine;
 use boom_config::Config;
-use handlebars::Handlebars;
+use handlebars::{
+    Context, Handlebars, Helper, HelperResult, Output, RenderContext, handlebars_helper,
+};
 use routes::{bangs::list_bangs, index::redirector};
+use serde::Serialize;
 use tokio::net::TcpListener;
 use tower_http::services::ServeDir;
 use tracing::{error, info};
@@ -30,6 +33,8 @@ pub async fn serve(address: IpAddr, port: u16, config: &Config) {
     info!(name:"Boom", "Starting Web Server on {}:{}", address, port);
 
     let mut hbs = Handlebars::new();
+    hbs.register_helper("json", Box::new(json_helper));
+
     hbs.register_template_string("/bangs", include_str!("../assets/bangs/index.html"))
         .expect("Template should be syntactically correct");
 
@@ -53,4 +58,23 @@ pub async fn serve(address: IpAddr, port: u16, config: &Config) {
     axum::serve(listener, router.into_make_service())
         .await
         .unwrap();
+}
+
+pub fn json_helper(
+    h: &Helper<'_>,
+    _: &Handlebars<'_>,
+    _: &Context,
+    _: &mut RenderContext<'_, '_>,
+    out: &mut dyn Output,
+) -> HelperResult {
+    // Take the first parameter to the helper
+    if let Some(param) = h.param(0) {
+        // Serialize it into JSON
+        let json = serde_json::to_string(param.value()).unwrap_or_else(|_| "null".to_string());
+        out.write(&json)?;
+    } else {
+        out.write("null")?;
+    }
+
+    Ok(())
 }
