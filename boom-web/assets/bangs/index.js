@@ -12,6 +12,18 @@
  * @property {string} u - URL Template
  */
 
+if (!Object.prototype.hasOwnProperty("let")) {
+  console.warn("`let` has already been defined");
+  Object.defineProperty(Object.prototype, "let", {
+    value: function (fn) {
+      return fn(this);
+    },
+    enumerable: false,
+    writable: true,
+    configurable: true,
+  });
+}
+
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker
     .register("/sw.js")
@@ -70,6 +82,9 @@ function isUserInteracting() {
 
 const raw = document.getElementById("bang-data")?.textContent ?? "{}";
 
+/**
+ * @type {Bang[]}
+ */
 const bangs = JSON.parse(raw);
 const bang_len = bangs.length;
 const pagination = {
@@ -79,10 +94,18 @@ const pagination = {
 };
 
 let bang_container;
+/**
+ * @type {(function(Bang, ...any): boolean) | null}
+ */
+let active_filter_fn =
+  getQueryFromURL()?.let((str) => {
+    if (str == null) return null;
+    else return (bang) => bang.u.toLowerCase().includes(str);
+  }) ?? null;
 
 window.onload = () => {
   bang_container = document.querySelector("table#bangs tbody");
-  loadBangs();
+  loadBangs(active_filter_fn);
 
   document.getElementById("next")?.addEventListener("click", () => {
     if (pagination.active_page_index < pagination.page_count - 1) {
@@ -95,6 +118,27 @@ window.onload = () => {
       goToPage(pagination.active_page_index - 1);
     }
   }) ?? console.warn("Could not add event listener to #prev");
+
+  document
+    .querySelector("input[name='bang-search']")
+    ?.addEventListener("input", (e) => {
+      const target = /** @type {HTMLInputElement} */ (e.currentTarget);
+
+      setTimeout(() => persistQueryToURL(target.value), 0);
+
+      if (target.value?.trim()?.length !== 0) {
+        pagination.active_page_index = 0;
+        active_filter_fn = (bang, ..._) =>
+          bang.u.toLowerCase().includes(target.value);
+        loadBangs(active_filter_fn);
+      } else {
+        if (active_filter_fn === null) return;
+
+        pagination.active_page_index = 0;
+        active_filter_fn = null;
+        loadBangs(active_filter_fn);
+      }
+    }) ?? console.warn("Could not add event listener to search input");
 };
 
 window.onpopstate =
@@ -104,7 +148,7 @@ window.onpopstate =
   (event) => {
     if (event.state && typeof event.state.pageIndex === "number") {
       pagination.active_page_index = event.state.pageIndex;
-      loadBangs();
+      loadBangs(active_filter_fn);
     }
   };
 
@@ -119,8 +163,9 @@ function getPageFromURL() {
 
 /**
  * @param {number} pageIndex
+ * @param {boolean} refresh - Refresh the bangs/only change the history
  */
-function goToPage(pageIndex) {
+function goToPage(pageIndex, refresh = true) {
   pagination.active_page_index = pageIndex;
 
   const params = new URLSearchParams(window.location.search);
@@ -130,13 +175,50 @@ function goToPage(pageIndex) {
   history.pushState({ pageIndex }, "", "?" + params.toString());
 
   // Load new page data
-  loadBangs();
+  refresh && loadBangs(active_filter_fn);
 }
 
-function loadBangs() {
+/**
+ * @returns {string | null}
+ */
+function getQueryFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  const query = params.get("query");
+  return query?.trim() ?? null;
+}
+
+/**
+ * @param {string} query
+ */
+function persistQueryToURL(query) {
+  const params = new URLSearchParams(window.location.search);
+  params.set("query", query);
+
+  // Push new state to history WITHOUT reloading
+  history.pushState({ query }, "", "?" + params.toString());
+}
+
+/**
+ * @param {(function(Bang, ...any): boolean) | null} filter
+ */
+function loadBangs(filter) {
+  const _bangs = filter === null ? bangs : bangs.filter(filter);
   const start = pagination.active_page_index * pagination.max_items;
   const end = start + pagination.max_items;
-  const currentItems = bangs.slice(start, end);
+  const currentItems = _bangs.slice(start, end);
+
+  pagination.page_count = Math.max(
+    Math.ceil(_bangs.length / pagination.max_items),
+    1,
+  );
+
+  goToPage(
+    Math.max(
+      Math.min(pagination.active_page_index, pagination.page_count - 1),
+      0,
+    ),
+    false,
+  );
 
   bang_container.innerHTML = "";
 
