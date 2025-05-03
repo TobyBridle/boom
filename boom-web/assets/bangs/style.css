@@ -182,13 +182,6 @@ table td.image .image-container {
       opacity: 0;
     }
   }
-
-  & img[data-fallback="1"] {
-    filter: invert(99%) sepia(12%) saturate(619%) hue-rotate(177deg)
-      brightness(99%) contrast(96%);
-    opacity: 0.5;
-    width: 24px;
-  }
 }
 
 table tr:nth-child(2n) {

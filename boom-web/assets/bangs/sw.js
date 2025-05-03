@@ -83,7 +83,6 @@ const fetchWithCache = async ({
     ? await preloadResponsePromise
     : undefined;
   if (preloadResponse) {
-    console.info("Using preload response: ", preloadResponse.clone());
     addResourceToCache(request, preloadResponse.clone());
     return preloadResponse;
   }
@@ -95,7 +94,6 @@ const fetchWithCache = async ({
   } catch (e) {
     const fallbackResponse = await caches.match(fallbackUrl);
     if (fallbackResponse) {
-      console.info("Using fallback response");
       return fallbackResponse;
     }
 
@@ -116,9 +114,12 @@ const enableNavigationPreload = async () => {
 selfTyped.addEventListener("install", (event) => {
   event.waitUntil(
     (async () => {
-      addResourcesToCache(["/assets/bangs/fallback-icon.svg"]).then((_) =>
-        console.log("Added fallback icon to cache"),
-      );
+      addResourcesToCache([
+        "/assets/bangs/index.js",
+        "/assets/bangs/index.html",
+        "/assets/bangs/style.css",
+        "/assets/bangs/fallback-icon.svg",
+      ]).then((_) => console.log("Added fallbacks to cache"));
       selfTyped.skipWaiting();
     })(),
   );
@@ -157,7 +158,7 @@ selfTyped.addEventListener("fetch", (event) => {
 selfTyped.addEventListener("message", async (event) => {
   const responsePort = event.ports[0];
 
-  switch (event.data.message) {
+  switch (event.data.message.trim()) {
     case "IS_FAVICON_CACHED":
       /**
        * @type CachedFaviconRequest

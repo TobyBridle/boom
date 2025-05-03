@@ -367,7 +367,12 @@ async function setFavicon(el, url) {
   if (!imageContainer) return console.warn("Could not select .image-container");
 
   crossfadeImage(imageContainer, img, originFavicon, cached ? 0 : 350).then(
-    (newImg) => (newImg.dataset["fallback"] = "0"),
+    (newImg) => {
+      try {
+        new URL(newImg.src).origin != window.origin &&
+          (newImg.dataset["fallback"] = "0");
+      } catch {}
+    },
   );
 }
 
@@ -398,8 +403,10 @@ function crossfadeImage(wrapper, imageEl, nextUrl, duration = 1000) {
     next.style.opacity = "1";
   };
 
+  let hasErrored = false;
   next.onerror = () => {
-    next.src = `https://icons.duckduckgo.com/ip3/${new URL(nextUrl).hostname}.ico`;
+    hasErrored &&
+      (next.src = `https://icons.duckduckgo.com/ip3/${new URL(nextUrl).hostname}.ico`);
   };
 
   return new Promise((resolve) => {
