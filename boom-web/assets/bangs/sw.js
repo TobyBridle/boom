@@ -72,7 +72,9 @@ const fetchWithCache = async ({
   preloadResponsePromise,
   fallbackUrl,
 }) => {
-  const cachedResponse = await caches.match(request);
+  const clonedRequest = request.clone();
+
+  const cachedResponse = await caches.match(clonedRequest);
   if (cachedResponse) {
     return cachedResponse;
   }
@@ -82,12 +84,12 @@ const fetchWithCache = async ({
     : undefined;
   if (preloadResponse) {
     console.info("Using preload response: ", preloadResponse.clone());
-    addResourceToCache(request, preloadResponse);
+    addResourceToCache(request, preloadResponse.clone());
     return preloadResponse;
   }
 
   try {
-    const response = await fetch(request.clone(), { mode: "no-cors" });
+    const response = await fetch(clonedRequest, { mode: "no-cors" });
     addResourceToCache(request, response.clone());
     return response;
   } catch (e) {
