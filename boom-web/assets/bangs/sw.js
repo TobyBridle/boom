@@ -141,15 +141,17 @@ selfTyped.addEventListener("activate", (event) => {
 });
 
 selfTyped.addEventListener("fetch", (event) => {
-  fetchWithCache({
-    request: event.request,
-    preloadResponsePromise: event.preloadResponse,
-    fallbackUrl: event.request.url.endsWith(".ico")
-      ? "/assets/bangs/fallback-icon.svg"
-      : undefined,
-  })
-    .then((res) => event.respondWith(res))
-    .catch((e) => console.error("Could not fetch:", e));
+  event.respondWith(
+    (async () => {
+      return fetchWithCache({
+        request: event.request,
+        preloadResponsePromise: event.preloadResponse,
+        fallbackUrl: event.request.url.endsWith(".ico")
+          ? "/assets/bangs/fallback-icon.svg"
+          : undefined,
+      });
+    })(),
+  );
 });
 
 selfTyped.addEventListener("message", async (event) => {
