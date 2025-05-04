@@ -6,22 +6,34 @@
  */
 
 /**
- * @typedef {Object} Bang
- * @property {string} s - Bang Short Form
- * @property {string} t - Bang Trigger
- * @property {string} u - URL Template
+ * Bang wrapper class
+ * @class
  */
+class Bang {
+  /**
+   * @param {string} s - The short
+   * @param {string} t - The trigger
+   * @param {string} u - The url template
+   */
+  constructor(s, t, u) {
+    /** @type {string} */
+    this.short = s;
 
-if (!Object.prototype.hasOwnProperty("let")) {
-  console.warn("`let` has already been defined");
-  Object.defineProperty(Object.prototype, "let", {
-    value: function (fn) {
-      return fn(this);
-    },
-    enumerable: false,
-    writable: true,
-    configurable: true,
-  });
+    /** @type {string} */
+    this.trigger = t;
+
+    /** @type {string} */
+    this.url_template = u;
+  }
+
+  /**
+   * @param {string} str
+   */
+  query(str) {
+    return [this.short, this.trigger, this.url_template].some((prop) =>
+      prop.toString().toLowerCase().includes(str),
+    );
+  }
 }
 
 if ("serviceWorker" in navigator) {
@@ -85,7 +97,11 @@ const raw = document.getElementById("bang-data")?.textContent ?? "{}";
 /**
  * @type {Bang[]}
  */
-const bangs = JSON.parse(raw);
+const bangs = JSON.parse(raw).map(
+  (/** @type {{s: string, t: string, u: string }} */ b) =>
+    new Bang(b.s, b.t, b.u),
+);
+
 const bang_len = bangs.length;
 const pagination = {
   max_items: 50,
@@ -94,14 +110,12 @@ const pagination = {
 };
 
 let bang_container;
-/**
- * @type {(function(Bang, ...any): boolean) | null}
- */
+
+const _urlQuery = getQueryFromURL();
+
+/** @type {((bang: Bang) => boolean) | null} */
 let active_filter_fn =
-  getQueryFromURL()?.let((str) => {
-    if (str == null) return null;
-    else return (bang) => bang.u.toLowerCase().includes(str);
-  }) ?? null;
+  _urlQuery != null ? (bang) => bang.query(_urlQuery) : null;
 
 window.onload = () => {
   bang_container = document.querySelector("table#bangs tbody");
@@ -119,26 +133,32 @@ window.onload = () => {
     }
   }) ?? console.warn("Could not add event listener to #prev");
 
-  document
-    .querySelector("input[name='bang-search']")
-    ?.addEventListener("input", (e) => {
-      const target = /** @type {HTMLInputElement} */ (e.currentTarget);
+  /**
+   * @type {HTMLInputElement|undefined}
+   */
+  const input = /** @type {HTMLInputElement|undefined}*/ (
+    document.querySelector("input[name='bang-search']")
+  );
 
-      setTimeout(() => persistQueryToURL(target.value), 0);
+  _urlQuery != null && input && (input.value = _urlQuery);
 
-      if (target.value?.trim()?.length !== 0) {
-        pagination.active_page_index = 0;
-        active_filter_fn = (bang, ..._) =>
-          bang.u.toLowerCase().includes(target.value);
-        loadBangs(active_filter_fn);
-      } else {
-        if (active_filter_fn === null) return;
+  input?.addEventListener("input", (e) => {
+    const target = /** @type {HTMLInputElement} */ (e.currentTarget);
 
-        pagination.active_page_index = 0;
-        active_filter_fn = null;
-        loadBangs(active_filter_fn);
-      }
-    }) ?? console.warn("Could not add event listener to search input");
+    setTimeout(() => persistQueryToURL(target.value), 0);
+
+    if (target.value?.trim()?.length !== 0) {
+      pagination.active_page_index = 0;
+      active_filter_fn = (bang, ..._) => bang.query(target.value.toLowerCase());
+      loadBangs(active_filter_fn);
+    } else {
+      if (active_filter_fn === null) return;
+
+      pagination.active_page_index = 0;
+      active_filter_fn = null;
+      loadBangs(active_filter_fn);
+    }
+  }) ?? console.warn("Could not add event listener to search input");
 };
 
 window.onpopstate =
@@ -274,7 +294,7 @@ function buildBangElement(bang) {
   shortCell.className = "image";
 
   const shortText = document.createElement("span");
-  shortText.textContent = bang.s;
+  shortText.textContent = bang.short;
 
   imageContainer.appendChild(faviconCell);
 
@@ -282,7 +302,7 @@ function buildBangElement(bang) {
   shortCell.appendChild(shortText);
 
   const triggerCell = document.createElement("td");
-  triggerCell.textContent = bang.t;
+  triggerCell.textContent = bang.trigger;
 
   const templateCell = document.createElement("td");
   const link = document.createElement("a");
@@ -292,14 +312,14 @@ function buildBangElement(bang) {
    */
   let url;
   try {
-    url = new URL(bang.u);
+    url = new URL(bang.url_template);
     link.href = url.origin;
   } catch (_) {
     url = new URL(location.href + "/assets/bangs/fallback-icon.svg");
-    link.href = bang.u;
+    link.href = bang.url_template.toString();
   }
 
-  link.textContent = bang.u;
+  link.textContent = bang.url_template.toString();
   link.target = "_blank";
   templateCell.appendChild(link);
 
