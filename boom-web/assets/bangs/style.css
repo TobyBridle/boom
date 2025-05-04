@@ -140,7 +140,7 @@ table td {
 
   pointer-events: none;
 
-  overflow-x: scroll;
+  overflow-x: auto;
   word-break: break-all;
 
   & a {
