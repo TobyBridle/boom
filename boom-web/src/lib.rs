@@ -42,6 +42,7 @@ pub async fn serve(address: IpAddr, port: u16, config: &Config) {
     let router = Router::new()
         .route("/", get(redirector))
         .route("/bangs", get(list_bangs))
+        .nest_service("/sw.js", ServeFile::new("boom-web/assets/bangs/sw.js"))
         .nest_service("/assets", ServeDir::new("boom-web/assets"))
         .with_state(AppState {
             engine: Engine::from(hbs),
