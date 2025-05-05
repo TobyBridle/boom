@@ -10,7 +10,7 @@
 // @ts-ignore
 const selfTyped = /** @type {ServiceWorkerGlobalScope} */ (self);
 
-const CACHE_VERSION = 2;
+const CACHE_VERSION = 3;
 const CACHE_NAME = `favicons-v${CACHE_VERSION}`;
 
 /**
@@ -88,7 +88,10 @@ const fetchWithCache = async ({
   }
 
   try {
-    const response = await fetch(clonedRequest, { mode: "no-cors" });
+    const response = await fetch(clonedRequest, {
+      mode: "no-cors",
+      redirect: "follow",
+    });
     addResourceToCache(request, response.clone());
     return response;
   } catch (e) {

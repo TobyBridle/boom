@@ -92,7 +92,7 @@ function isUserInteracting() {
   return isInteracting;
 }
 
-const raw = document.getElementById("bang-data")?.textContent ?? "{}";
+let raw = document.getElementById("bang-data")?.textContent ?? "{}";
 
 /**
  * @type {Bang[]}
@@ -118,6 +118,9 @@ let active_filter_fn =
   _urlQuery != null ? (bang) => bang.query(_urlQuery) : null;
 
 window.onload = () => {
+  /// @ts-ignore
+  raw = undefined;
+
   bang_container = document.querySelector("table#bangs tbody");
   loadBangs(active_filter_fn);
 
@@ -204,7 +207,7 @@ function goToPage(pageIndex, refresh = true) {
 function getQueryFromURL() {
   const params = new URLSearchParams(window.location.search);
   const query = params.get("query");
-  return query?.trim() ?? null;
+  return query?.trim()?.toLowerCase() ?? null;
 }
 
 /**
@@ -316,7 +319,7 @@ function buildBangElement(bang) {
     link.href = url.origin;
   } catch (_) {
     url = new URL(location.href + "/assets/bangs/fallback-icon.svg");
-    link.href = bang.url_template.toString();
+    link.href = "#";
   }
 
   link.textContent = bang.url_template.toString();
@@ -425,8 +428,10 @@ function crossfadeImage(wrapper, imageEl, nextUrl, duration = 1000) {
 
   let hasErrored = false;
   next.onerror = () => {
-    hasErrored &&
-      (next.src = `https://icons.duckduckgo.com/ip3/${new URL(nextUrl).hostname}.ico`);
+    if (hasErrored) return;
+    hasErrored = true;
+
+    next.src = `https://icons.duckduckgo.com/ip3/${new URL(nextUrl).hostname}.ico`;
   };
 
   return new Promise((resolve) => {
