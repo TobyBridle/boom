@@ -9,8 +9,8 @@ use boom_config::Config;
 use handlebars::{
     Context, Handlebars, Helper, HelperResult, Output, RenderContext, handlebars_helper,
 };
-use routes::{bangs::list_bangs, index::redirector};
 use serde::Serialize;
+use routes::{bangs::list_bangs, index::redirector, opensearch::opensearch};
 use tokio::net::TcpListener;
 use tower_http::services::ServeDir;
 use tower_http::services::{ServeDir, ServeFile};
@@ -42,6 +42,7 @@ pub async fn serve(address: IpAddr, port: u16, config: &Config) {
     let router = Router::new()
         .route("/", get(redirector))
         .route("/bangs", get(list_bangs))
+        .route("/opensearch.xml", get(opensearch))
         .nest_service("/sw.js", ServeFile::new("boom-web/assets/bangs/sw.js"))
         .nest_service("/assets", ServeDir::new("boom-web/assets"))
         .with_state(AppState {
