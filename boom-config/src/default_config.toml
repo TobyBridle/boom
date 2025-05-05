@@ -3,6 +3,8 @@ address = "127.0.0.1"
 port = 3000
 # Wait for the internet connection to be valid before attempting to serve
 wait_for_internet = false
+# Whether or not to use SSL; primarily just for http/https in boom-web
+is_secure = false # Must be false on 127.0.0.1
 
 [bangs]
 # The entirety of `{{{s}}}` will be replaced with the search term

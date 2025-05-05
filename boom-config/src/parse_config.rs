@@ -66,10 +66,20 @@ fn parse_server_config(table: &Item) -> ServerConfig {
             })
             });
 
+    let is_secure = table
+        .get("is_secure")
+        .map_or(default.is_secure, |is_secure| {
+            is_secure.as_bool().unwrap_or_else(|| {
+                eprintln!("Expected [server.is_secure] to be a boolean. Got {is_secure:?}");
+                exit(1);
+            })
+        });
+
     ServerConfig {
         address,
         port,
         wait_for_internet,
+        is_secure,
     }
 }
 
