@@ -3,22 +3,35 @@ use std::{
     sync::{Arc, RwLock},
 };
 
+use axum::response::{IntoResponse, Response};
 use axum::{Router, routing::get};
 use axum_template::engine::Engine;
 use boom_config::Config;
-use handlebars::{
-    Context, Handlebars, Helper, HelperResult, Output, RenderContext, handlebars_helper,
-};
-use serde::Serialize;
+use handlebars::{Context, Handlebars, Helper, HelperResult, Output, RenderContext};
 use routes::{bangs::list_bangs, index::redirector, opensearch::opensearch};
 use tokio::net::TcpListener;
-use tower_http::services::ServeDir;
+use tower::util::Either;
 use tower_http::services::{ServeDir, ServeFile};
 use tracing::{error, info};
 
 mod routes;
 
 type AppEngine = Engine<Handlebars<'static>>;
+
+pub struct EitherResponse<A, B>(pub Either<A, B>);
+
+impl<A, B> IntoResponse for EitherResponse<A, B>
+where
+    A: IntoResponse,
+    B: IntoResponse,
+{
+    fn into_response(self) -> Response {
+        match self.0 {
+            Either::Left(a) => a.into_response(),
+            Either::Right(b) => b.into_response(),
+        }
+    }
+}
 
 #[derive(Clone)]
 pub struct AppState {

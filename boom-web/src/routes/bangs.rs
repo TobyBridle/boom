@@ -6,14 +6,24 @@ use serde::Serialize;
 use crate::AppState;
 
 #[derive(Serialize, Debug)]
-struct TemplateData {
+pub struct TemplateData {
     bangs: Vec<Redirect>,
 }
 
-pub async fn list_bangs(State(state): State<AppState>) -> impl IntoResponse {
-    let data = TemplateData {
-        bangs: get_redirects().unwrap().clone(),
-    };
+impl TemplateData {
+    pub fn new(bangs: Vec<Redirect>) -> Self {
+        Self { bangs }
+    }
+}
 
-    RenderHtml("/bangs", state.engine, data)
+impl Default for TemplateData {
+    fn default() -> Self {
+        Self {
+            bangs: get_redirects().unwrap().clone(),
+        }
+    }
+}
+
+pub async fn list_bangs(State(state): State<AppState>) -> impl IntoResponse {
+    RenderHtml("/bangs", state.engine, TemplateData::default())
 }
