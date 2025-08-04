@@ -4,9 +4,14 @@ use std::{
     path::PathBuf,
 };
 
+use rust_embed::RustEmbed;
 use serde::Deserialize;
 pub mod parse_config;
 pub mod read_config;
+
+#[derive(RustEmbed)]
+#[folder = "src/"]
+pub struct Assets;
 
 #[derive(Clone, Deserialize, Default, Debug, PartialEq, Eq)]
 pub struct Config {

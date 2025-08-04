@@ -3,15 +3,19 @@ use std::{
     sync::{Arc, RwLock},
 };
 
-use axum::response::{IntoResponse, Response};
 use axum::{Router, routing::get};
+use axum::{
+    extract::Path,
+    http::StatusCode,
+    response::{IntoResponse, Response},
+};
 use axum_template::engine::Engine;
 use boom_config::Config;
 use handlebars::{Context, Handlebars, Helper, HelperResult, Output, RenderContext};
 use routes::{bangs::list_bangs, index::redirector, opensearch::opensearch};
+use rust_embed::RustEmbed;
 use tokio::net::TcpListener;
 use tower::util::Either;
-use tower_http::services::{ServeDir, ServeFile};
 use tracing::{error, info};
 
 mod routes;
@@ -39,6 +43,27 @@ pub struct AppState {
     shared_config: Arc<RwLock<Config>>,
 }
 
+#[derive(RustEmbed)]
+#[folder = "assets/"]
+struct Assets;
+
+async fn asset_handler(Path(path): Path<String>) -> impl IntoResponse {
+    match Assets::get(&path) {
+        Some(asset) => {
+            let mime = mime_guess::from_path(&path).first_or_text_plain();
+            Response::builder()
+                .status(200)
+                .header("Content-Type", mime.as_ref())
+                .body(axum::body::Body::from(asset.data))
+                .unwrap()
+        }
+        None => Response::builder()
+            .status(StatusCode::NOT_FOUND)
+            .body("404 not found".into())
+            .unwrap(),
+    }
+}
+
 /// Serve the web server on `address` and `port`
 ///
 /// # Panics
@@ -56,8 +81,11 @@ pub async fn serve(address: IpAddr, port: u16, config: &Config) {
         .route("/", get(redirector))
         .route("/bangs", get(list_bangs))
         .route("/opensearch.xml", get(opensearch))
-        .nest_service("/sw.js", ServeFile::new("boom-web/assets/bangs/sw.js"))
-        .nest_service("/assets", ServeDir::new("boom-web/assets"))
+        .route("/assets/{*path}", get(asset_handler)) // serve embedded files
+        .route(
+            "/sw.js",
+            get(|| async { asset_handler(Path("bangs/sw.js".to_string())).await }),
+        )
         .with_state(AppState {
             engine: Engine::from(hbs),
             shared_config: Arc::new(RwLock::new(config.clone())),

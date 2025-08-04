@@ -23,8 +23,7 @@ tools should be rewritten in other languages - particularly Rust. Rust is the la
 
 ## Usage/Examples
 
-**IMPORTANT: `serve` USES TEMPLATING FILES RELATIVE TO THE EXECUTABLE.**\
-For example, when using boom as a `systemd` service:
+**Using `boom` as a systemd service**
 
 ```
 [Unit]
@@ -34,7 +33,6 @@ After=network.target
 [Service]
 ExecStart=%h/.cargo/bin/boom serve
 Restart=on-failure
-WorkingDirectory=%h/boom # <--- note this
 Environment=RUST_LOG=info
 
 [Install]
