@@ -220,7 +220,7 @@ dependencies = [
 
 [[package]]
 name = "boom"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "allocation-counter",
  "boom-config",
@@ -248,7 +248,7 @@ dependencies = [
 
 [[package]]
 name = "boom-core"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "boom-config",
  "concat-string",
@@ -261,7 +261,7 @@ dependencies = [
 
 [[package]]
 name = "boom-web"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "axum",
  "axum-template",

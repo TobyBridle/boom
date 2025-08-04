@@ -41,7 +41,7 @@ async fn main() -> std::io::Result<()> {
         if matches!(setup, SetupMode::All) || !config.bangs.default.filepath.try_exists()? {
             download_remote(&config.bangs.default.remote, &config.bangs.default.filepath)
                 .await
-                .unwrap_or_else(|e| eprintln!("Could not fetch bangs from remote. Continuing without default bangs.\nError: {e:?}"));
+                .unwrap_or_else(|e| eprintln!("Could not fetch bangs from remote ({}). Continuing without default bangs.\nError: {e:?}", &config.bangs.default.remote));
         }
 
         parse_bang_file(&config.bangs.default.filepath).unwrap_or_else(|e| {

@@ -18,7 +18,10 @@ pub async fn download_remote(
     let client = Client::new();
     let mut res = client.get(url).send().await?;
 
-    let mut writer = BufWriter::new(OpenOptions::new().write(true).truncate(true).open(out)?);
+    if let Some(parent) = out.parent() {
+        std::fs::create_dir_all(parent).expect("Parent directories should exist");
+    }
+    let mut writer = BufWriter::new(OpenOptions::new().write(true).create(true).open(out)?);
     while let Some(chunk) = res.chunk().await? {
         let _ = writer.write(&chunk)?;
     }
