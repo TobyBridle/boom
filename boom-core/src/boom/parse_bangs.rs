@@ -35,7 +35,8 @@ use super::Match;
 /// # Example
 /// ```
 /// use std::env;
-/// use boom::boom::{Redirect, parse_bangs::parse_bang_file};
+/// use boom_core::Redirect;
+/// use boom_core::boom::{parse_bangs::parse_bang_file};
 /// // Use default bangs file
 //  let vec: Vec<Redirect> = parse_bang_file(&{
 //      let mut d = env::current_dir().unwrap();

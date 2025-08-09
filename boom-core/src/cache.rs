@@ -19,8 +19,8 @@ static REDIRECT_LIST: LazyLock<RwLock<Vec<Redirect>>> = LazyLock::new(|| RwLock:
 ///
 /// # Example
 /// ```
-/// use boom::cache::init_list;
-/// use boom::boom::Redirect;
+/// use boom_core::cache::init_list;
+/// use boom_core::Redirect;
 ///
 /// fn get_bangs_from_file() -> Vec<Redirect> { vec![] }
 /// let bangs = get_bangs_from_file();
@@ -69,7 +69,7 @@ pub fn set_redirects(redirects: Vec<Redirect>) -> Result<(), Box<dyn std::error:
 ///
 /// # Example
 /// ```
-/// use boom::cache::{insert_bang};
+/// use boom_core::cache::{insert_bang};
 ///
 /// fn get_index(key: &str) -> Option<usize> {
 ///     // fancy schmancy key grabbing logic here
@@ -91,7 +91,7 @@ pub fn insert_bang(bang: String, template_index: usize) -> Result<(), Box<dyn st
 ///
 /// # Example
 /// ```
-/// use boom::cache::get_bang;
+/// use boom_core::cache::get_bang;
 ///
 /// let does_bang_exist = get_bang("yt").unwrap().is_some();
 /// ```
