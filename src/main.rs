@@ -26,6 +26,25 @@ async fn main() -> std::io::Result<()> {
         .init();
 
     let args = Arc::new(cli::Args::parse());
+
+    if let LaunchType::Validate { verbose } = args.launch {
+        info!("Reading {}", &args.config.display());
+
+        match &args.config.read_into_builder() {
+            Ok(cfg) => {
+                dbg!(cfg.clone().build());
+                info!("Parsed config with no errors.");
+            }
+            Err(e) => error!("{}", e),
+        }
+
+        if verbose {
+            info!("Verbose mode is enabled");
+        }
+
+        exit(1);
+    }
+
     let config = &args
         .config
         .read_into_builder()
@@ -87,18 +106,7 @@ async fn main() -> std::io::Result<()> {
         LaunchType::Resolve { search_query, .. } => {
             println!("Resolved: {:?}", resolve(search_query.as_str(), config));
         }
-        LaunchType::Validate { verbose } => {
-            info!("Reading {}", &args.config.display());
-            match &args.config.read_into_builder() {
-                Ok(cfg) => {
-                    if *verbose {
-                        dbg!(cfg.clone().build());
-                    }
-                    info!("Parsed config with no errors.");
-                }
-                Err(e) => error!(e),
-            }
-        }
+        _ => {}
     }
 
     Ok(())
