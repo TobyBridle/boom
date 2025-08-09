@@ -27,5 +27,5 @@ pub fn read_config(config_path: &PathBuf) -> Result<Config, Box<dyn std::error::
         )?;
     }
 
-    fs::read_to_string(config_path).and_then(|cfg| parse_config(&cfg))?
+    Ok(fs::read_to_string(config_path).map(|cfg| parse_config(&cfg))?)
 }
