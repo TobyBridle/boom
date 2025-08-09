@@ -1,5 +1,5 @@
 use std::{
-    fs::OpenOptions,
+    fs::{self, OpenOptions},
     io::{BufWriter, Write},
     path::PathBuf,
 };
@@ -19,9 +19,15 @@ pub async fn download_remote(
     let mut res = client.get(url).send().await?;
 
     if let Some(parent) = out.parent() {
-        std::fs::create_dir_all(parent).expect("Parent directories should exist");
+        fs::create_dir_all(parent)?;
     }
-    let mut writer = BufWriter::new(OpenOptions::new().write(true).create(true).open(out)?);
+    let mut writer = BufWriter::new(
+        OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(out)?,
+    );
     while let Some(chunk) = res.chunk().await? {
         let _ = writer.write(&chunk)?;
     }
