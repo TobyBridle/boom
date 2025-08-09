@@ -7,7 +7,7 @@ use std::arch::x86_64::{
     _mm_prefetch, _mm_set1_epi8,
 };
 
-use std::{fs::File, path::PathBuf};
+use std::path::PathBuf;
 
 use crate::Redirect;
 
@@ -47,11 +47,9 @@ pub fn parse_bang_file(bangs: &PathBuf) -> Result<Vec<Redirect>, Box<dyn std::er
     assert!(bangs.exists(), "File {} does not exist.", bangs.display());
     assert!(bangs.is_file(), "{} is not a file.", bangs.display());
 
-    let bang_file = File::open(bangs)?;
-    let breader = std::io::BufReader::new(bang_file);
-
-    let redirects: Vec<Redirect> = serde_json::from_reader(breader)?;
-    Ok(redirects)
+    Ok(serde_json::from_str(
+        std::fs::read_to_string(bangs)?.as_str(),
+    )?)
 }
 
 #[inline]

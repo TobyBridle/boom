@@ -38,18 +38,13 @@ pub fn resolve(query: &str, config: &Config) -> String {
             );
             let encoded_query = urlencoding::encode(query.as_str()).replace("%2F", "/");
 
-            let redirect_idx = match get_bang(bang).unwrap() {
-                Some(idx) => idx,
-                None => {
-                    eprintln!(
-                        "Bang ({bang}) could not be found in cache. Assuming default search."
-                    );
-                    return concat_string!(
-                        template[..indexes.start],
-                        encoded_query,
-                        template[indexes.end..]
-                    );
-                }
+            let Some(redirect_idx) = get_bang(bang).unwrap() else {
+                eprintln!("Bang ({bang}) could not be found in cache. Assuming default search.");
+                return concat_string!(
+                    template[..indexes.start],
+                    encoded_query,
+                    template[indexes.end..]
+                );
             };
             let mut template = get_redirects().expect("Redirect list should be initialised")
                 [redirect_idx]
