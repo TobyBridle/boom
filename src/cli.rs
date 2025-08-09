@@ -6,11 +6,13 @@ use serde::Serialize;
 
 #[must_use]
 pub fn get_default_config_path() -> PathBuf {
-    let home_dir = env::var("HOME").unwrap_or_else(|_| ".".to_string());
-    PathBuf::from(&home_dir)
-        .join(".config")
-        .join("boom")
-        .join("config.toml")
+    let home_dir = if cfg!(unix) {
+        env::var("XDG_CONFIG_HOME")
+    } else {
+        env::var("USERPROFILE").map(|home| home + "\\.config")
+    }
+    .unwrap_or_else(|_| ".".to_string());
+    PathBuf::from(&home_dir).join("boom").join("config.toml")
 }
 
 #[derive(Subcommand, Clone, Debug, Serialize)]
