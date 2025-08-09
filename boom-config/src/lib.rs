@@ -30,7 +30,7 @@ pub struct ServerConfig {
 impl Default for ServerConfig {
     fn default() -> Self {
         Self {
-            address: IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
+            address: IpAddr::V4(Ipv4Addr::LOCALHOST),
             port: 3000,
             wait_for_internet: false,
             is_secure: false,

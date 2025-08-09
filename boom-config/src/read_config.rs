@@ -1,8 +1,4 @@
-use std::{
-    fs::{self, File},
-    io::{BufReader, Read},
-    path::PathBuf,
-};
+use std::{fs, path::PathBuf};
 
 use tracing::info;
 
@@ -21,19 +17,15 @@ pub fn read_config(config_path: &PathBuf) -> Result<Config, Box<dyn std::error::
     if !config_path.exists() {
         info!("Creating default config file at {config_path:?}");
         if let Some(parent_dir) = config_path.parent() {
-            fs::create_dir_all(parent_dir).expect("Parent directories should exist");
+            fs::create_dir_all(parent_dir)?;
         }
         fs::write(
             config_path,
             Assets::get("default_config.toml")
-                .expect("Default Config should exist within boom-config/src")
+                .ok_or("Expected default config to exist")?
                 .data,
         )?;
     }
 
-    let mut reader = BufReader::new(File::open(config_path)?);
-    let mut buffer = String::with_capacity(4096);
-    reader.read_to_string(&mut buffer)?;
-
-    Ok(parse_config(&buffer))
+    fs::read_to_string(config_path).and_then(|cfg| parse_config(&cfg))?
 }
