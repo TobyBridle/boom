@@ -2,9 +2,7 @@ use std::{fs, path::PathBuf};
 
 use tracing::info;
 
-use crate::Assets;
-
-use super::{Config, parse_config::parse_config};
+use crate::{Assets, ConfigBuilder, ConfigSource};
 
 /// Reads (& parses) a config file from `config_path`, attempting to create a default one if it does not
 /// exist.
@@ -13,19 +11,20 @@ use super::{Config, parse_config::parse_config};
 /// If the default config file cannot be created/copied to
 /// If the config cannot be opened
 /// If the contents of the config file are not valid UTF-8
-pub fn read_config(config_path: &PathBuf) -> Result<Config, Box<dyn std::error::Error>> {
-    if !config_path.exists() {
-        info!("Creating default config file at {config_path:?}");
-        if let Some(parent_dir) = config_path.parent() {
-            fs::create_dir_all(parent_dir)?;
+impl ConfigSource for PathBuf {
+    fn read_into_builder(&self) -> Result<ConfigBuilder, Box<dyn std::error::Error>> {
+        if !self.exists() {
+            info!("Creating default config file at {:?}", &self);
+            if let Some(parent_dir) = self.parent() {
+                fs::create_dir_all(parent_dir)?;
+            }
+            fs::write(
+                self,
+                Assets::get("default_config.toml")
+                    .ok_or("Expected default config to exist")?
+                    .data,
+            )?;
         }
-        fs::write(
-            config_path,
-            Assets::get("default_config.toml")
-                .ok_or("Expected default config to exist")?
-                .data,
-        )?;
+        Ok(toml::from_str::<ConfigBuilder>(&fs::read_to_string(self)?)?)
     }
-
-    Ok(fs::read_to_string(config_path).map(|cfg| parse_config(&cfg))?)
 }

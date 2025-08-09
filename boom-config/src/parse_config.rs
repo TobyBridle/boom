@@ -1,34 +1,19 @@
-use tracing::error;
-
-use crate::Config;
-
-/// Parses a config in the form of a string
-///
-/// # Panics
-/// If the contents of the string is not valid TOML/UTF-8
-pub fn parse_config(config: &str) -> Config {
-    match toml::from_str::<Config>(config) {
-        Ok(config) => config,
-        Err(e) => {
-            error!("{:?}", e);
-            std::process::exit(1)
-        }
-    }
-}
-
 mod test {
+    #[allow(unused_imports)]
+    use crate::ConfigBuilder;
+
     #[allow(unused_imports)]
     use std::path::PathBuf;
 
     #[allow(unused_imports)]
-    use crate::{BangCustomConfig, ServerConfig, parse_config::parse_config};
+    use crate::{BangCustomConfig, ServerConfig};
 
     #[test]
     fn test_config_parse() {
         let config = r#"
             [server]
             address = "127.0.0.1"
-            port = "abc"
+            port = 3000
 
             [bangs]
             # The entirety of `{{{s}}}` will be replaced with the search term
@@ -53,7 +38,9 @@ mod test {
             trigger = "amazedev"
         "#;
 
-        let parsed_config = parse_config(config);
+        let parsed_config = toml::from_str::<ConfigBuilder>(config)
+            .expect("Config should be properly formatted.")
+            .build();
         dbg!(&parsed_config);
         assert_eq!(parsed_config.server, ServerConfig::default());
         assert_eq!(

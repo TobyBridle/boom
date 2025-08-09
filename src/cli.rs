@@ -1,6 +1,6 @@
 use std::{env, net::IpAddr, path::PathBuf};
 
-use boom_config::Config;
+use boom_config::{ConfigBuilder, ConfigSource};
 use clap::{Parser, Subcommand, command};
 use serde::Serialize;
 
@@ -92,19 +92,20 @@ pub struct Args {
     pub config: PathBuf,
 }
 
-#[must_use]
-pub const fn merge_with_config(args: &Args, mut config: Config) -> Config {
-    match args.launch {
-        LaunchType::Serve {
+impl ConfigSource for Args {
+    fn read_into_builder(&self) -> Result<ConfigBuilder, Box<dyn std::error::Error>> {
+        let mut builder = ConfigBuilder::new();
+        if let LaunchType::Serve {
             addr,
             port,
             await_internet,
-        } => {
-            config.server.address = addr;
-            config.server.port = port;
-            config.server.wait_for_internet = await_internet;
-            config
+        } = self.launch
+        {
+            builder.set_port(port).set_address(addr);
+            if await_internet {
+                builder.wait_for_internet();
+            }
         }
-        _ => config,
+        Ok(builder)
     }
 }

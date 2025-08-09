@@ -1,6 +1,6 @@
 use std::{io, process::exit, sync::Arc};
 
-use boom_config::{Config, read_config::read_config};
+use boom_config::{ConfigBuilder, ConfigSource};
 use boom_core::{
     Redirect,
     boom::{grab_remote_bangs::download_remote, parse_bangs::parse_bang_file, resolver::resolve},
@@ -8,7 +8,7 @@ use boom_core::{
 };
 use boom_web::serve;
 use clap::Parser;
-use cli::{LaunchType, SetupMode, merge_with_config};
+use cli::{LaunchType, SetupMode};
 use tracing::{Level, error, info};
 pub mod cli;
 
@@ -26,14 +26,17 @@ async fn main() -> std::io::Result<()> {
         .init();
 
     let args = Arc::new(cli::Args::parse());
-    let config = merge_with_config(
-        &args,
-        read_config(&args.config).unwrap_or_else(|e| {
+    let config = &args
+        .config
+        .read_into_builder()
+        .unwrap_or_else(|e| {
             eprintln!("Could not read Config. Reason: {e:?}");
             eprintln!("Falling back to default config.");
-            Config::default()
-        }),
-    );
+            ConfigBuilder::default()
+        })
+        .add_source(args.as_ref())
+        .to_owned()
+        .build();
 
     let setup = args.launch.setup_type();
 
@@ -79,17 +82,17 @@ async fn main() -> std::io::Result<()> {
                 boom_core::await_internet().await;
             }
 
-            serve(*addr, *port, &config).await;
+            serve(*addr, *port, config).await;
         }
         LaunchType::Resolve { search_query, .. } => {
-            println!("Resolved: {:?}", resolve(search_query.as_str(), &config));
+            println!("Resolved: {:?}", resolve(search_query.as_str(), config));
         }
         LaunchType::Validate { verbose } => {
             info!("Reading {}", &args.config.display());
-            match read_config(&args.config) {
+            match &args.config.read_into_builder() {
                 Ok(cfg) => {
                     if *verbose {
-                        dbg!(cfg);
+                        dbg!(cfg.clone().build());
                     }
                     info!("Parsed config with no errors.");
                 }

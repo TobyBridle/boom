@@ -9,3 +9,4 @@ tracing.workspace = true
 rust-embed.workspace = true
 toml = "0.9.5"
 home = "0.5.11"
+merge = { version = "0.2.0", features = ["derive"] }
