@@ -1,5 +1,7 @@
 use std::{
     collections::HashMap,
+    env,
+    fmt::Display,
     net::{IpAddr, Ipv4Addr},
     path::PathBuf,
 };
@@ -19,6 +21,17 @@ pub struct Assets;
 pub struct Config {
     pub server: ServerConfig,
     pub bangs: BangConfig,
+}
+
+#[must_use]
+pub fn get_default_config_path() -> PathBuf {
+    let home_dir = if cfg!(unix) {
+        env::var("XDG_CONFIG_HOME").or_else(|_| env::var("HOME"))
+    } else {
+        env::var("USERPROFILE").map(|home| home + "\\.config")
+    }
+    .unwrap_or_else(|_| ".".to_string());
+    PathBuf::from(&home_dir).join("boom").join("config.toml")
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -43,7 +56,7 @@ impl Default for ServerConfig {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct BangConfig {
     pub default_search_template: String,
-    pub default: BangDefaultConfig,
+    pub sources: Vec<BangSourceConfig>,
     pub custom: HashMap<String, BangCustomConfig>,
 }
 
@@ -51,26 +64,41 @@ impl Default for BangConfig {
     fn default() -> Self {
         Self {
             default_search_template: "https://google.com/search?q={{{s}}}".to_string(),
-            default: BangDefaultConfig::default(),
+            sources: vec![BangSourceConfig::default()],
             custom: HashMap::new(),
         }
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct BangDefaultConfig {
-    pub enabled: bool,
+pub struct BangSourceConfig {
+    pub required: bool,
     pub filepath: PathBuf,
-    pub remote: String,
+    pub remote: Option<String>,
 }
 
-impl Default for BangDefaultConfig {
+impl Default for BangSourceConfig {
     fn default() -> Self {
         Self {
-            enabled: true,
-            filepath: PathBuf::new(),
-            remote: "https://duckduckgo.com/bang.js".to_string(),
+            required: true,
+            filepath: get_default_config_path(),
+            remote: Some("https://duckduckgo.com/bang.js".to_string()),
         }
+    }
+}
+
+impl Display for BangSourceConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!(
+            "\"{}\" {} [{}]",
+            self.filepath.display(),
+            self.remote.as_ref().unwrap_or(&String::new()),
+            if self.required {
+                "required"
+            } else {
+                "optional"
+            }
+        ))
     }
 }
 
@@ -104,16 +132,17 @@ pub struct ServerConfigBuilder {
 pub struct BangConfigBuilder {
     #[merge(strategy = merge::option::overwrite_none)]
     pub default_search_template: Option<String>,
-    #[merge(strategy = merge::option::overwrite_none)]
-    pub default: Option<BangDefaultConfigBuilder>,
+    #[merge(strategy = merge::vec::append)]
+    #[serde(rename = "source")]
+    pub sources: Vec<BangSourceConfigBuilder>,
     #[merge(strategy = merge::hashmap::overwrite)]
     pub custom: HashMap<String, BangCustomConfig>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, Merge, Deserialize)]
-pub struct BangDefaultConfigBuilder {
+pub struct BangSourceConfigBuilder {
     #[merge(strategy = merge::option::overwrite_none)]
-    pub enabled: Option<bool>,
+    pub required: Option<bool>,
     #[merge(strategy = merge::option::overwrite_none)]
     pub filepath: Option<PathBuf>,
     #[merge(strategy = merge::option::overwrite_none)]
@@ -170,33 +199,6 @@ impl ConfigBuilder {
         self
     }
 
-    pub fn disable_default_bangs(&mut self) -> &mut Self {
-        self.bangs
-            .get_or_insert_default()
-            .default
-            .get_or_insert_default()
-            .enabled = Some(false);
-        self
-    }
-
-    pub fn set_bang_cache<P: Into<PathBuf>>(&mut self, path: P) -> &mut Self {
-        self.bangs
-            .get_or_insert_default()
-            .default
-            .get_or_insert_default()
-            .filepath = Some(path.into());
-        self
-    }
-
-    pub fn set_cache_origin<P: Into<String>>(&mut self, origin: P) -> &mut Self {
-        self.bangs
-            .get_or_insert_default()
-            .default
-            .get_or_insert_default()
-            .remote = Some(origin.into());
-        self
-    }
-
     pub fn add_custom_bang<B: Into<String>, C: Into<BangCustomConfig>>(
         &mut self,
         bang_name: B,
@@ -247,7 +249,7 @@ impl From<BangConfig> for BangConfigBuilder {
     fn from(config: BangConfig) -> Self {
         Self {
             default_search_template: Some(config.default_search_template),
-            default: Some(config.default.into()),
+            sources: config.sources.into_iter().map(Into::into).collect(),
             custom: config.custom,
         }
     }
@@ -260,32 +262,29 @@ impl From<BangConfigBuilder> for BangConfig {
             default_search_template: builder
                 .default_search_template
                 .unwrap_or(default.default_search_template),
-            default: builder
-                .default
-                .unwrap_or_else(|| default.default.into())
-                .into(),
+            sources: builder.sources.into_iter().map(Into::into).collect(),
             custom: builder.custom,
         }
     }
 }
 
-impl From<BangDefaultConfig> for BangDefaultConfigBuilder {
-    fn from(config: BangDefaultConfig) -> Self {
+impl From<BangSourceConfig> for BangSourceConfigBuilder {
+    fn from(config: BangSourceConfig) -> Self {
         Self {
-            enabled: Some(config.enabled),
+            required: Some(config.required),
             filepath: Some(config.filepath),
-            remote: Some(config.remote),
+            remote: config.remote,
         }
     }
 }
 
-impl From<BangDefaultConfigBuilder> for BangDefaultConfig {
-    fn from(builder: BangDefaultConfigBuilder) -> Self {
+impl From<BangSourceConfigBuilder> for BangSourceConfig {
+    fn from(builder: BangSourceConfigBuilder) -> Self {
         let default = Self::default();
         Self {
-            enabled: builder.enabled.unwrap_or(default.enabled),
+            required: builder.required.unwrap_or(default.required),
             filepath: builder.filepath.unwrap_or(default.filepath),
-            remote: builder.remote.unwrap_or(default.remote),
+            remote: builder.remote,
         }
     }
 }

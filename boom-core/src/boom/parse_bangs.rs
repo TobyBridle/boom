@@ -45,9 +45,6 @@ use super::Match;
 //  }).unwrap_or(vec![]);
 /// ```
 pub fn parse_bang_file(bangs: &PathBuf) -> Result<Vec<Redirect>, Box<dyn std::error::Error>> {
-    assert!(bangs.exists(), "File {} does not exist.", bangs.display());
-    assert!(bangs.is_file(), "{} is not a file.", bangs.display());
-
     Ok(serde_json::from_str(
         std::fs::read_to_string(bangs)?.as_str(),
     )?)

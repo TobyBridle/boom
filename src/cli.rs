@@ -1,19 +1,8 @@
-use std::{env, net::IpAddr, path::PathBuf};
+use std::{net::IpAddr, path::PathBuf};
 
-use boom_config::{ConfigBuilder, ConfigSource};
+use boom_config::{ConfigBuilder, ConfigSource, get_default_config_path};
 use clap::{Parser, Subcommand, command};
 use serde::Serialize;
-
-#[must_use]
-pub fn get_default_config_path() -> PathBuf {
-    let home_dir = if cfg!(unix) {
-        env::var("XDG_CONFIG_HOME")
-    } else {
-        env::var("USERPROFILE").map(|home| home + "\\.config")
-    }
-    .unwrap_or_else(|_| ".".to_string());
-    PathBuf::from(&home_dir).join("boom").join("config.toml")
-}
 
 #[derive(Subcommand, Clone, Debug, Serialize)]
 pub enum LaunchType {
@@ -59,7 +48,7 @@ pub enum LaunchType {
     },
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Copy, Clone)]
 pub(crate) enum SetupMode {
     All,
     Caches,

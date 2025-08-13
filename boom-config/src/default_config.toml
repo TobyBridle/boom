@@ -11,13 +11,16 @@ is_secure = false # Must be false on 127.0.0.1
 default_search_template = "https://google.com/search?q={{{s}}}"
 
 # Set the path to a default bang file
-[bangs.default]
+[[bangs.source]]
 # Whether to bother requesting the bangs or not
-enabled = true
+required = true
 filepath = "~/.cache/boom/bangs.json"
 # Where to fetch the bangs from
 remote = "https://duckduckgo.com/bang.js"
 
+# Existing bangs may be overwritten by their custom equivalent.
+# Declaring a bang here is the only way to guarantee that it will be used and not overwritten
+# in a race condition between sources.
 [bangs.custom]
 boomdev = { template = "https://github.com/tobybridle/boom", trigger = "boomdev" }
 # ^ shortname

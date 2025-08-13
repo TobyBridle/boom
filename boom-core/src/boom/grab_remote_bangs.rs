@@ -1,9 +1,10 @@
 use std::{
     fs::{self, OpenOptions},
     io::{BufWriter, Write},
-    path::PathBuf,
+    path::Path,
 };
 
+use expanduser::expanduser;
 use reqwest::Client;
 
 /// Downloads an external bang json file (`url`) into the designated file (`out`)
@@ -11,27 +12,29 @@ use reqwest::Client;
 /// # Errors
 /// If the initial request to `url` doesn't succeed.
 /// If the output file cannot be created/written to
-pub async fn download_remote(
-    url: &String,
-    out: &PathBuf,
-) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn download_remote(url: &String, out: &Path) -> Result<(), Box<dyn std::error::Error>> {
     let client = Client::new();
     let mut res = client.get(url).send().await?;
 
-    if let Some(parent) = out.parent() {
-        fs::create_dir_all(parent)?;
+    if let Ok(out_) = expanduser(
+        out.to_str()
+            .ok_or_else(|| format!("Could not convert {} into str", out.display()))?,
+    ) && let Some(parent) = out_.parent()
+    {
+        if !parent.exists() {
+            fs::create_dir_all(parent)?;
+        }
+        let mut writer = BufWriter::new(
+            OpenOptions::new()
+                .write(true)
+                .create(true)
+                .truncate(true)
+                .open(out_)?,
+        );
+        while let Some(chunk) = res.chunk().await? {
+            let _ = writer.write(&chunk)?;
+        }
     }
-    let mut writer = BufWriter::new(
-        OpenOptions::new()
-            .write(true)
-            .create(true)
-            .truncate(true)
-            .open(out)?,
-    );
-    while let Some(chunk) = res.chunk().await? {
-        let _ = writer.write(&chunk)?;
-    }
-
     Ok(())
 }
 

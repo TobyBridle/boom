@@ -1,5 +1,8 @@
 mod test {
     #[allow(unused_imports)]
+    use crate::Assets;
+
+    #[allow(unused_imports)]
     use crate::ConfigBuilder;
 
     #[allow(unused_imports)]
@@ -10,35 +13,15 @@ mod test {
 
     #[test]
     fn test_config_parse() {
-        let config = r#"
-            [server]
-            address = "127.0.0.1"
-            port = 3000
+        let config = String::from_utf8(
+            Assets::get("default_config.toml")
+                .expect("default config should exist.")
+                .data
+                .into_owned(),
+        )
+        .unwrap();
 
-            [bangs]
-            # The entirety of `{{{s}}}` will be replaced with the search term
-            default_search_template = "https://google.com/search?q={{{s}}}"
-
-            # Set the path to a default bang file
-            [bangs.default]
-            # Whether to bother requesting the bangs or not
-            enabled = true
-            filepath = "~/.cache/boom/bangs.json"
-            # Where to fetch the bangs from
-            remote = "https://duckduckgo.com/bang.js"
-
-            [bangs.custom]
-            boomdev = { template = "https://github.com/tobybridle/boom", trigger = "boomdev" }
-            # ^ shortname
-
-            # You can also set them like this
-            [bangs.custom.amazingdev]
-            # `!amazedev boom` resolves to the url for this project!
-            template = "https://github.com/tobybridle/{{{s}}}"
-            trigger = "amazedev"
-        "#;
-
-        let parsed_config = toml::from_str::<ConfigBuilder>(config)
+        let parsed_config = toml::from_str::<ConfigBuilder>(&config)
             .expect("Config should be properly formatted.")
             .build();
         dbg!(&parsed_config);
@@ -47,14 +30,14 @@ mod test {
             parsed_config.bangs.default_search_template,
             "https://google.com/search?q={{{s}}}"
         );
-        assert!(parsed_config.bangs.default.enabled);
+        assert!(parsed_config.bangs.sources[0].required);
         assert_eq!(
-            parsed_config.bangs.default.filepath,
+            parsed_config.bangs.sources[0].filepath,
             PathBuf::from("~/.cache/boom/bangs.json")
         );
         assert_eq!(
-            parsed_config.bangs.default.remote,
-            "https://duckduckgo.com/bang.js"
+            parsed_config.bangs.sources[0].remote,
+            Some("https://duckduckgo.com/bang.js".to_string())
         );
         assert_eq!(
             parsed_config.bangs.custom.get("boomdev"),
