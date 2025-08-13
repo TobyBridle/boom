@@ -86,6 +86,39 @@ A default configuration file can be found at `~/.config/boom/config.toml`\
 This is automatically created when `boom` cannot find a config file and is used\
 unless specified otherwise (via the `-c` tac)
 
+> [!IMPORTANT]
+>
+> On Linux, the `XDG_DATA_DIR` is used for the configuration home.
+> In the case that this is not found, it will use `$HOME` as a fallback, similarly to MacOS.
+>
+> Windows relies on `%USERPROFILE%`.
+>
+> All OS will use the current working directory as their final choice. The tilde is automatically expanded within `bangs.source.filepath` to match these conditions.
+
+### Customising Bangs using External Sources
+
+Bangs can be imported from external sources, such as the [default provider (DuckDuckGo)](https://duckduckgo.com/bang.js). These sources
+must be serialized in JSON with the following format:
+
+```json
+[
+  {
+    "s": "short name (e.g GitHub)",
+    "t": "trigger (e.g gh)",
+    "u": "url template (e.g https://github.com/{{{s}}}"
+  }
+]
+```
+
+These bangs are imported in a free-for-all fashion. There is no guaranteed order. Bangs imported from smaller sources with faster response times have a higher chance of being used, though not guaranteed due to the race-conditions taking place. This is not a design flaw, rather it ensures that mass amounts of sources can be imported in parallel.
+
+> [!WARNING]
+>
+> If you need a bang definition to be consistently loaded, look at the next section.
+
+### Customising Bangs within the Config
+
+Bangs defined within the config have the highest precedence. They will never be overwritten by bangs from external sources.
 Please note that functionality similar to that of a URL-shortener can be achieved by
 omitting any search template.
 ```toml
@@ -106,26 +139,33 @@ Resolved: "https://mysuperlongurl.com?with_some_params=1234"
 
 
 ### Default Configuration
-The default configuration some, believe it or not, sane defaults to `boom`.
+
+The default configuration uses some, believe it or not, sane defaults to `boom`.
+
 ```toml
 [server]
 address = "127.0.0.1"
 port = 3000
+# Wait for the internet connection to be valid before attempting to serve
+wait_for_internet = false
+# Whether or not to use SSL; primarily just for http/https in boom-web
+is_secure = false # Must be false on 127.0.0.1
 
 [bangs]
 # The entirety of `{{{s}}}` will be replaced with the search term
 default_search_template = "https://google.com/search?q={{{s}}}"
-#                         "https://www.bing.com/search?q={{{s}}}"
-#                         "https://www.qwant.com/?l=en&q={{{s}}}"
 
 # Set the path to a default bang file
-[bangs.default]
+[[bangs.source]]
 # Whether to bother requesting the bangs or not
-enabled = true
+required = true
 filepath = "~/.cache/boom/bangs.json"
 # Where to fetch the bangs from
 remote = "https://duckduckgo.com/bang.js"
 
+# Existing bangs may be overwritten by their custom equivalent.
+# Declaring a bang here is the only way to guarantee that it will be used and not overwritten
+# in a race condition between sources.
 [bangs.custom]
 boomdev = { template = "https://github.com/tobybridle/boom", trigger = "boomdev" }
 # ^ shortname
