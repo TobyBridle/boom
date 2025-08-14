@@ -25,13 +25,23 @@ pub struct Config {
 
 #[must_use]
 pub fn get_default_config_path() -> PathBuf {
-    let home_dir = if cfg!(unix) {
-        env::var("XDG_CONFIG_HOME").or_else(|_| env::var("HOME"))
+    let config_dir = if cfg!(unix) {
+        env::var("XDG_CONFIG_HOME")
+            .map(PathBuf::from)
+            .unwrap_or_else(|_| {
+                env::var("HOME").map_or_else(
+                    |_| PathBuf::from(".".to_string()),
+                    |home| PathBuf::from(home).join(".config"),
+                )
+            })
     } else {
-        env::var("USERPROFILE").map(|home| home + "\\.config")
-    }
-    .unwrap_or_else(|_| ".".to_string());
-    PathBuf::from(&home_dir).join("boom").join("config.toml")
+        PathBuf::from(
+            env::var("USERPROFILE")
+                .map(|home| home + "\\.config")
+                .unwrap_or_else(|_| ".".to_string()),
+        )
+    };
+    config_dir.join("boom").join("config.toml")
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
