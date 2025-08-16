@@ -1,0 +1,11 @@
+* {
+  all: revert;
+
+  font-family: monospace;
+  box-sizing: border-box;
+}
+
+body {
+  color: #f2f4f8;
+  background: #161616;
+}

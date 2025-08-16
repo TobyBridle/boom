@@ -1,8 +1,11 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Boom</title>
     <link rel="stylesheet" type="text/css" href="/assets/layout.css" />
-    <link rel="stylesheet" type="text/css" href="/assets/bangs/style.css" />
+    <link rel="stylesheet" type="text/css" href="/assets/index.css" />
     <link
       rel="apple-touch-icon"
       sizes="180x180"
@@ -27,17 +30,20 @@
       title="Boom"
       href="/opensearch.xml"
     />
+    <script type="module" src="/assets/index.js"></script>
   </head>
   <body>
-    <nav>
-      <div class="bang-search">
+    <div class="container">
+      <img src="/assets/icon-transparent.png" alt="Boom Icon" />
+      <form role="search" type="GET" action="/">
         <input
           type="text"
-          id="filterInput"
-          placeholder="SEARCH BANGS"
-          name="bang-search"
+          name="q"
+          placeholder="Type. Bang. Boom."
+          minlength="1"
+          required
         />
-        <label for="bang-search">
+        <label for="q">
           <svg
             class="feather feather-search"
             fill="none"
@@ -54,31 +60,17 @@
             <line x1="21" x2="16.65" y1="21" y2="16.65" />
           </svg>
         </label>
-      </div>
-    </nav>
-
-    <h1 id="all">All {{len bangs}} Bang(s)</h1>
-    <div id="all-pagination">
-      <button id="prev">&lt;</button>
-      <span id="page-info"></span>
-      <button id="next">&gt;</button>
+      </form>
+      <footer>
+        <div class="info-box">
+          <h2>Struggling?</h2>  
+          <p>Unsure of how to use bangs? Try <pre>!w DuckDuckGo#Bangs</pre></p>
+        </div>
+        <div class="info-box">
+          <h2>View your Bangs</h2>  
+          <p>View/add your own bangs <a id="view-bang" href="/bangs">here</a>
+        </div>
+      </footer>
     </div>
-
-    <table id="bangs">
-      <thead>
-        <tr>
-          <th>Short</th>
-          <th>Trigger</th>
-          <th>Template</th>
-        </tr>
-      </thead>
-
-      <tbody></tbody>
-    </table>
-
-    <script type="application/json" id="bang-data">
-      {{{json bangs}}}
-    </script>
-    <script type="module" src="/assets/bangs/index.js"></script>
   </body>
 </html>

@@ -125,17 +125,21 @@ table {
   border-collapse: collapse;
 }
 
+table tr {
+  outline: 1px solid #393939;
+}
+
 table th {
   text-align: left;
   padding: 1rem 8px;
   font-size: 1.25rem;
-  outline: 1px solid #212121;
+  background: #262626;
 }
 
 table td {
   height: 64px;
   font-size: 1.4rem;
-  outline: 1px solid #212121;
+  border-left: 1px solid #232323;
   padding-left: 8px;
 
   pointer-events: none;
@@ -144,10 +148,14 @@ table td {
   word-break: break-all;
 
   & a {
-    color: inherit;
-    text-decoration: none;
+    color: #0f62fe;
+    text-decoration: underline;
     cursor: pointer;
     pointer-events: all;
+
+    &:visited {
+      color: #79a8ff;
+    }
   }
 }
 
@@ -184,11 +192,7 @@ table td.image .image-container {
   }
 }
 
-table tr:nth-child(2n) {
-  background: #161616;
-}
-
-table tr:nth-child(2n + 1) {
+table tr:nth-of-type(2n) {
   background: #181818;
 }
 

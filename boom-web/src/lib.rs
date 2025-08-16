@@ -82,6 +82,9 @@ pub async fn serve(address: IpAddr, port: u16, config: &Config) {
     let mut hbs = Handlebars::new();
     hbs.register_helper("json", Box::new(json_helper));
 
+    hbs.register_template_string("/", include_str!("../assets/index.html"))
+        .expect("Template should be syntactically correct");
+
     hbs.register_template_string("/bangs", include_str!("../assets/bangs/index.html"))
         .expect("Template should be syntactically correct");
 

@@ -20,6 +20,8 @@ pub struct SearchParams {
     pub(crate) query: Option<String>,
 }
 
+/// [`redirector`] handles directing the user to the location of their parsed query, or, if no
+/// query is provided, showing them to the `boom` homepage.
 pub async fn redirector(
     State(state): State<AppState>,
     Query(params): Query<SearchParams>,
@@ -37,7 +39,7 @@ pub async fn redirector(
         info!("Redirecting to {resolved} took {:?}", timer.elapsed());
         Either::Left(Redirect::to(resolved.as_str()))
     } else {
-        Either::Right(RenderHtml("/bangs", state.engine, TemplateData::default()))
+        Either::Right(RenderHtml("/", state.engine, TemplateData::default()))
     };
 
     EitherResponse(res)
