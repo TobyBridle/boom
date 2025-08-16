@@ -11,7 +11,7 @@ boom-config = { path = "../boom-config/" }
 concat-string = "1.0.1"
 serde.workspace = true
 serde_json.workspace = true
-reqwest = "0.12.15"
+reqwest.workspace = true
 urlencoding = "2.1.3"
 tracing.workspace = true
 expanduser.workspace = true

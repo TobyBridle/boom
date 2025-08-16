@@ -50,6 +50,7 @@ pub struct ServerConfig {
     pub port: u16,
     pub wait_for_internet: bool,
     pub is_secure: bool,
+    pub search_suggestions: String,
 }
 
 impl Default for ServerConfig {
@@ -59,6 +60,7 @@ impl Default for ServerConfig {
             port: 3000,
             wait_for_internet: false,
             is_secure: false,
+            search_suggestions: "https://search.brave.com/api/suggest?q={searchTerms}".to_string(),
         }
     }
 }
@@ -136,6 +138,8 @@ pub struct ServerConfigBuilder {
     pub wait_for_internet: Option<bool>,
     #[merge(strategy = merge::option::overwrite_none)]
     pub is_secure: Option<bool>,
+    #[merge(strategy = merge::option::overwrite_none)]
+    pub search_suggestions: Option<String>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, Merge, Deserialize)]
@@ -237,6 +241,7 @@ impl From<ServerConfig> for ServerConfigBuilder {
             port: Some(config.port),
             wait_for_internet: Some(config.wait_for_internet),
             is_secure: Some(config.is_secure),
+            search_suggestions: Some(config.search_suggestions),
         }
     }
 }
@@ -251,6 +256,9 @@ impl From<ServerConfigBuilder> for ServerConfig {
             address: builder.address.unwrap_or(default.address),
             port: builder.port.unwrap_or(default.port),
             is_secure: builder.is_secure.unwrap_or(default.is_secure),
+            search_suggestions: builder
+                .search_suggestions
+                .unwrap_or(default.search_suggestions),
         }
     }
 }

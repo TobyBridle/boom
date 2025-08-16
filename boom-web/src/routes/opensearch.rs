@@ -20,7 +20,7 @@ r#"
   <Image width="16" height="16" type="image/x-icon">{ICON_ICO}</Image>
   <Image width="32" height="32" type="image/png">{ICON_32}</Image>
   <Url type="text/html" template="http{is_secure}://{address}:{port}/?q={{searchTerms}}"/>
-  <Url type="application/x-suggestions+json" template="https://search.brave.com/api/suggest?q={{searchTerms}}"/>
+  <Url type="application/x-suggestions+json" method="GET" template="http{is_secure}://{address}:{port}/suggest?q={{searchTerms}}" />
 <Url
   type="application/opensearchdescription+xml"
   rel="self"

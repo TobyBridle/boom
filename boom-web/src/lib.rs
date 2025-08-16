@@ -18,6 +18,8 @@ use tokio::net::TcpListener;
 use tower::util::Either;
 use tracing::{error, info};
 
+use crate::routes::suggest::suggest;
+
 mod routes;
 
 type AppEngine = Engine<Handlebars<'static>>;
@@ -80,6 +82,7 @@ pub async fn serve(address: IpAddr, port: u16, config: &Config) {
     let router = Router::new()
         .route("/", get(redirector))
         .route("/bangs", get(list_bangs))
+        .route("/suggest", get(suggest))
         .route("/opensearch.xml", get(opensearch))
         .route("/assets/{*path}", get(asset_handler)) // serve embedded files
         .route(

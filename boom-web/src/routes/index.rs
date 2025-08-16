@@ -17,7 +17,7 @@ use super::bangs::TemplateData;
 #[derive(Deserialize)]
 pub struct SearchParams {
     #[serde(rename = "q")]
-    query: Option<String>,
+    pub(crate) query: Option<String>,
 }
 
 pub async fn redirector(

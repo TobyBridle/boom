@@ -269,6 +269,7 @@ dependencies = [
 name = "boom-config"
 version = "0.1.0"
 dependencies = [
+ "expanduser",
  "home",
  "merge",
  "rust-embed",
@@ -301,6 +302,7 @@ dependencies = [
  "boom-core",
  "handlebars",
  "mime_guess",
+ "reqwest",
  "rust-embed",
  "serde",
  "serde_json",
