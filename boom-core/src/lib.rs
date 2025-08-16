@@ -1,3 +1,9 @@
+//! # About
+//!
+//! `boom-core` provides the integral parts of `boom`.
+//! It provides functions for efficiently extracting data from queries and templates,
+//! as well as higher-level functions such as `resolve`
+
 use std::time::Duration;
 
 use reqwest::Client;

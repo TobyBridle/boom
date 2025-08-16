@@ -1,3 +1,25 @@
+//! Boom relies on DuckDuckGo-style "bangs" to enable quicker searches
+//!
+//! ## Crates in use:
+//! - [`boom_config`]
+//! - [`boom_core`]
+//! - [`boom_web`]
+//!
+//! ## Performance
+//! [`boom_core::boom::resolver::resolve`] is capable of resolving queries in just a couple of
+//! microseconds.
+//! Though overkill, it is able to use SIMD to parse gigantic queries without a
+//! struggle.
+//!
+//! From a cold start, the boom executable is able to read the user config, fetch (catched)
+//! sources, and resolve a query, in less than 10ms.
+//! Considering this was benchmarked using the default `DuckDuckGo` bangs, a JSON file containing over 13,000 unique bangs, 10ms is quite an impressive
+//! number.
+//!
+//! ## Development
+//! A test-driven development approach, combined with constant benchmarking, allows boom to be
+//! very performant, whilst being ready for edge-cases.
+
 use std::{io, process::exit, sync::Arc};
 
 use boom_config::{BangSourceConfig, ConfigBuilder, ConfigSource};
@@ -119,6 +141,13 @@ async fn main() -> std::io::Result<()> {
     Ok(())
 }
 
+/// Add a list of bangs into a slice of existing Bangs
+/// Attempts to optimise execution time by only downloading remote sources
+/// when the cached resource is explicitly ignored.
+///
+/// > **NOTE**: This function may error, without causing a [`panic!`] or exiting the process.
+/// > Error/warning logs will be produced, though the program will continue as usual, if the source
+/// > was not required.
 async fn add_external_sources(
     sources: &[BangSourceConfig],
     bangs: &mut Vec<Redirect>,
@@ -147,7 +176,7 @@ async fn add_external_sources(
             }
 
             let filepath =
-                if let Ok(filepath_str) = &source.filepath.to_str().ok_or_else(|| {
+                if let Ok(filepath_str) = source.filepath.to_str().ok_or_else(|| {
                     format!("Could not convert {} into str", source.filepath.display())
                 }) && let Ok(p) = expanduser(filepath_str)
                 {

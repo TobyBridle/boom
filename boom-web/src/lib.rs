@@ -1,3 +1,8 @@
+//! # About
+//! `boom-web` leverages [`axum`] to allow for a high-speed and resource-efficient web server.
+//! Whilst [`boom_core`] provides the tools to crunch data, `boom-web` provides the user-facing
+//! functions to display awesome web pages.
+
 use std::{
     net::{IpAddr, SocketAddr},
     sync::{Arc, RwLock},
@@ -47,6 +52,7 @@ pub struct AppState {
 
 #[derive(RustEmbed)]
 #[folder = "assets/"]
+/// Assets bundled directly into the binary.
 struct Assets;
 
 async fn asset_handler(Path(path): Path<String>) -> impl IntoResponse {
@@ -107,6 +113,10 @@ pub async fn serve(address: IpAddr, port: u16, config: &Config) {
         .unwrap();
 }
 
+/// Allows JSON to be passed nicely into Handlebars templates.
+///
+/// # Errors
+/// If the output cannot be written to
 pub fn json_helper(
     h: &Helper<'_>,
     _: &Handlebars<'_>,

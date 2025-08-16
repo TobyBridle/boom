@@ -23,22 +23,29 @@ pub struct Config {
     pub bangs: BangConfig,
 }
 
+/// Uses [`env::var`] to find the best place to store/find the config.
+///
+/// On UNIX systems, `boom` will attempt to use `$XDG_CONFIG_HOME/boom/config.toml`, with `$HOME/.config/boom/config.toml` as a fallback.
+///
+/// On Windows, `%USERPROFILE%` will be used.
+///
+/// In the event that the platform-specific approaches fall through, `boom` will use the current
+/// directory with `./boom/config.toml`.
 #[must_use]
 pub fn get_default_config_path() -> PathBuf {
     let config_dir = if cfg!(unix) {
-        env::var("XDG_CONFIG_HOME")
-            .map(PathBuf::from)
-            .unwrap_or_else(|_| {
+        env::var("XDG_CONFIG_HOME").map_or_else(
+            |_| {
                 env::var("HOME").map_or_else(
                     |_| PathBuf::from(".".to_string()),
                     |home| PathBuf::from(home).join(".config"),
                 )
-            })
+            },
+            PathBuf::from,
+        )
     } else {
         PathBuf::from(
-            env::var("USERPROFILE")
-                .map(|home| home + "\\.config")
-                .unwrap_or_else(|_| ".".to_string()),
+            env::var("USERPROFILE").map_or_else(|_| ".".to_string(), |home| home + "\\.config"),
         )
     };
     config_dir.join("boom").join("config.toml")

@@ -11,7 +11,8 @@ pub struct TemplateData {
 }
 
 impl TemplateData {
-    pub fn new(bangs: Vec<Redirect>) -> Self {
+    #[allow(dead_code)]
+    pub const fn new(bangs: Vec<Redirect>) -> Self {
         Self { bangs }
     }
 }
@@ -24,6 +25,7 @@ impl Default for TemplateData {
     }
 }
 
+/// [`list_bangs`] - a quite self-explanatory name.
 pub async fn list_bangs(State(state): State<AppState>) -> impl IntoResponse {
     RenderHtml("/bangs", state.engine, TemplateData::default())
 }

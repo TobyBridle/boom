@@ -50,12 +50,19 @@ pub enum LaunchType {
 
 #[derive(PartialEq, Eq, Copy, Clone)]
 pub(crate) enum SetupMode {
+    /// Setup, ignoring any existing caches. If they are present, the cached resources will be
+    /// overwritten.
     All,
+    /// Cache-only setup, not requesting external resources.
     Caches,
+    /// No setup required.
     NoSetup,
 }
 
 impl LaunchType {
+    /// Returns the appropriate [`SetupMode`] for any given [`LaunchType`].
+    /// Depending on whether or not the user specifies to use cache, the setup mode
+    /// may differ between [`LaunchType`].
     pub(crate) const fn setup_type(&self) -> SetupMode {
         match self {
             Self::Serve { .. } => SetupMode::All,
