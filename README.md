@@ -97,7 +97,7 @@ unless specified otherwise (via the `-c` tac)
 
 > [!IMPORTANT]
 >
-> On Linux, the `XDG_DATA_DIR` is used for the configuration home.
+> On Linux, the `XDG_CONFIG_HOME` is used for the configuration home.
 > In the case that this is not found, it will use `$HOME` as a fallback, similarly to MacOS.
 >
 > Windows relies on `%USERPROFILE%`.
