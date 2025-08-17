@@ -1,7 +1,9 @@
+pub mod add_external_sources;
 pub mod grab_remote_bangs;
 pub mod parse_bangs;
 pub mod parse_templates;
 pub mod resolver;
+pub mod update_bangs_from_config;
 
 use std::{cmp::max, ops::Range};
 

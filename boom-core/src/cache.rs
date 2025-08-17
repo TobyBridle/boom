@@ -4,6 +4,8 @@ use std::{
     sync::{LazyLock, RwLock, RwLockReadGuard},
 };
 
+use tracing::info;
+
 use crate::Redirect;
 
 pub static CACHE: LazyLock<RwLock<HashMap<String, usize>>> =
@@ -97,4 +99,29 @@ pub fn insert_bang(bang: String, template_index: usize) -> Result<(), Box<dyn st
 /// ```
 pub fn get_bang(bang: &str) -> Result<Option<usize>, Box<dyn std::error::Error>> {
     Ok(CACHE.try_read()?.get(bang).copied())
+}
+
+/// Attempt to update a redirect, replacing it if found, and pushing it onto the [`REDIRECT_LIST`]
+/// if not found.
+///
+/// # Errors
+/// - if a write lock could not be optained on the [`REDIRECT_LIST`]
+/// - if the [`get_bang`] fails
+/// - if the bang insertion fails
+pub fn update_redirect(redirect: &Redirect) -> Result<(), Box<dyn std::error::Error>> {
+    let mut write_lock = REDIRECT_LIST
+        .write()
+        .map_err(|e| format!("RwLock poisoned: {e}"))?;
+
+    if let Some(idx) = get_bang(&redirect.trigger)? {
+        info!("Replacing `!{}` in cache", redirect.trigger);
+        write_lock[idx] = redirect.clone();
+    } else {
+        write_lock.push(redirect.clone());
+        insert_bang(redirect.trigger.clone(), write_lock.len() - 1)
+            .map_err(|e| format!("Insert bang failed: {e}"))?;
+    }
+    drop(write_lock);
+
+    Ok(())
 }

@@ -20,20 +20,18 @@
 //! A test-driven development approach, combined with constant benchmarking, allows boom to be
 //! very performant, whilst being ready for edge-cases.
 
-use std::{io, process::exit, sync::Arc};
-
-use boom_config::{BangSourceConfig, ConfigBuilder, ConfigSource};
-use boom_core::{
-    Redirect,
-    boom::{grab_remote_bangs::download_remote, parse_bangs::parse_bang_file, resolver::resolve},
-    cache::{insert_bang, set_redirects},
+use std::{
+    io,
+    process::exit,
+    sync::{Arc, RwLock},
 };
+
+use boom_config::{ConfigBuilder, ConfigSource};
+use boom_core::boom::{resolver::resolve, update_bangs_from_config::update_bangs_from_config};
 use boom_web::serve;
 use clap::Parser;
 use cli::{LaunchType, SetupMode};
-use expanduser::expanduser;
-use tokio::task::JoinSet;
-use tracing::{Level, error, info, warn};
+use tracing::{Level, error, info};
 pub mod cli;
 
 #[tokio::main]
@@ -83,41 +81,13 @@ async fn main() -> std::io::Result<()> {
 
     let setup = args.launch.setup_type();
 
-    let mut bangs = vec![];
-
-    add_external_sources(
-        &config.bangs.sources,
-        &mut bangs,
+    update_bangs_from_config(
+        Arc::new(config.bangs.clone()),
+        Arc::new(RwLock::new(vec![])),
         matches!(setup, SetupMode::Caches),
+        false,
     )
     .await;
-
-    if bangs.is_empty() {
-        warn!("No bangs were loaded. Is this intended?");
-    }
-
-    let custom_bangs = config
-        .bangs
-        .custom
-        .iter()
-        .map(|(short_name, custom)| Redirect {
-            short_name: short_name.clone(),
-            trigger: custom.trigger.clone(),
-            url_template: custom.template.clone(),
-        });
-
-    info!("Loaded {} bangs from config file.", custom_bangs.len());
-    bangs.extend(custom_bangs);
-
-    bangs.iter().enumerate().for_each(|(i, r)| {
-        insert_bang(r.trigger.clone(), i).unwrap_or_else(|_| {
-            eprintln!(
-                "Bang ({}) should not already exist within the cache",
-                r.trigger
-            );
-        });
-    });
-    set_redirects(bangs).unwrap();
 
     #[allow(clippy::match_wildcard_for_single_variants)]
     match &args.launch {
@@ -139,72 +109,4 @@ async fn main() -> std::io::Result<()> {
     }
 
     Ok(())
-}
-
-/// Add a list of bangs into a slice of existing Bangs
-/// Attempts to optimise execution time by only downloading remote sources
-/// when the cached resource is explicitly ignored.
-///
-/// > **NOTE**: This function may error, without causing a [`panic!`] or exiting the process.
-/// > Error/warning logs will be produced, though the program will continue as usual, if the source
-/// > was not required.
-async fn add_external_sources(
-    sources: &[BangSourceConfig],
-    bangs: &mut Vec<Redirect>,
-    use_cache: bool,
-) {
-    let mut set = JoinSet::new();
-
-    for source in sources.iter().cloned() {
-        set.spawn(async move {
-            if !use_cache && let Some(remote) = &source.remote {
-                match download_remote(remote, &source.filepath).await {
-                    Ok(()) => info!("Fetched bangs from {source}"),
-                    Err(e) => {
-                        if source.required {
-                            error!(
-                                "Could not fetch bangs from remote source {source}. Error: {e:?}"
-                            );
-                            exit(1);
-                        } else {
-                            warn!(
-                                "Could not fetch bangs from remote source {source}. Error: {e:?}"
-                            );
-                        }
-                    }
-                }
-            }
-
-            let filepath =
-                if let Ok(filepath_str) = source.filepath.to_str().ok_or_else(|| {
-                    format!("Could not convert {} into str", source.filepath.display())
-                }) && let Ok(p) = expanduser(filepath_str)
-                {
-                    &p.clone()
-                } else {
-                    warn!("Could not expand {source}. Continuing with path as is.");
-                    &source.filepath
-                };
-
-            match parse_bang_file(filepath) {
-                Ok(bangs) => {
-                    info!("Loaded {} bangs from source {}", bangs.len(), source);
-                    bangs
-                }
-                Err(e) => {
-                    if source.required {
-                        error!("Could not read bang source {source}. Error: {e:?}");
-                        exit(1);
-                    } else {
-                        warn!("Skipping bang source {source}. Error: {e:?}");
-                        vec![]
-                    }
-                }
-            }
-        });
-    }
-
-    while let Some(res) = set.join_next().await {
-        bangs.extend(res.unwrap());
-    }
 }

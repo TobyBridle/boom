@@ -15,8 +15,10 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use axum_template::engine::Engine;
-use boom_config::Config;
+use boom_config::{Config, ConfigBuilder, get_default_config_path};
+use boom_core::boom::update_bangs_from_config::update_bangs_from_config;
 use handlebars::{Context, Handlebars, Helper, HelperResult, Output, RenderContext};
+use notify::{RecommendedWatcher, Watcher};
 use routes::{bangs::list_bangs, index::redirector, opensearch::opensearch};
 use rust_embed::RustEmbed;
 use tokio::net::TcpListener;
@@ -88,6 +90,58 @@ pub async fn serve(address: IpAddr, port: u16, config: &Config) {
     hbs.register_template_string("/bangs", include_str!("../assets/bangs/index.html"))
         .expect("Template should be syntactically correct");
 
+    let shared_config = RwLock::from(config.clone());
+
+    let state = AppState {
+        engine: Engine::from(hbs),
+        shared_config: Arc::new(shared_config),
+    };
+
+    // NOTE: Hot-reloading only works using the default config path!
+    let shared_config = Arc::clone(&state.shared_config);
+    tokio::spawn(async move {
+        let (tx, rx) = std::sync::mpsc::channel();
+        let mut watcher =
+            RecommendedWatcher::new(tx, notify::Config::default().with_compare_contents(true))
+                .unwrap();
+        watcher
+            .watch(
+                &get_default_config_path(),
+                notify::RecursiveMode::NonRecursive,
+            )
+            .unwrap();
+        for res in rx {
+            match res {
+                Ok(event) => {
+                    if !matches!(
+                        event.kind,
+                        notify::EventKind::Modify(notify::event::ModifyKind::Data(_)),
+                    ) {
+                        continue;
+                    }
+
+                    if let Ok(mut write_lock) = shared_config.write() {
+                        let config = ConfigBuilder::new()
+                            .add_source(&get_default_config_path())
+                            .to_owned()
+                            .build();
+                        *write_lock = config;
+                    }
+
+                    let config_bangs = Arc::new(shared_config.read().unwrap().bangs.clone());
+                    update_bangs_from_config(
+                        config_bangs,
+                        Arc::new(RwLock::new(vec![])),
+                        true,
+                        true,
+                    )
+                    .await;
+                }
+                Err(e) => error!("Watch Error: {e:?}"),
+            }
+        }
+    });
+
     let router = Router::new()
         .route("/", get(redirector))
         .route("/bangs", get(list_bangs))
@@ -98,10 +152,7 @@ pub async fn serve(address: IpAddr, port: u16, config: &Config) {
             "/sw.js",
             get(|| async { asset_handler(Path("bangs/sw.js".to_string())).await }),
         )
-        .with_state(AppState {
-            engine: Engine::from(hbs),
-            shared_config: Arc::new(RwLock::new(config.clone())),
-        });
+        .with_state(state);
 
     let addr = SocketAddr::new(address, port);
     let listener = match TcpListener::bind(addr).await {
