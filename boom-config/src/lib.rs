@@ -155,7 +155,8 @@ pub struct BangConfigBuilder {
     pub default_search_template: Option<String>,
     #[merge(strategy = merge::vec::append)]
     #[serde(rename = "source")]
-    pub sources: Vec<BangSourceConfigBuilder>,
+    #[merge(strategy = merge::option::overwrite_none)]
+    pub sources: Option<Vec<BangSourceConfigBuilder>>,
     #[merge(strategy = merge::hashmap::overwrite)]
     pub custom: HashMap<String, BangCustomConfig>,
 }
@@ -274,7 +275,7 @@ impl From<BangConfig> for BangConfigBuilder {
     fn from(config: BangConfig) -> Self {
         Self {
             default_search_template: Some(config.default_search_template),
-            sources: config.sources.into_iter().map(Into::into).collect(),
+            sources: Some(config.sources.into_iter().map(Into::into).collect()),
             custom: config.custom,
         }
     }
@@ -287,7 +288,9 @@ impl From<BangConfigBuilder> for BangConfig {
             default_search_template: builder
                 .default_search_template
                 .unwrap_or(default.default_search_template),
-            sources: builder.sources.into_iter().map(Into::into).collect(),
+            sources: builder.sources.map_or_else(Vec::new, |sources| {
+                sources.into_iter().map(Into::into).collect()
+            }),
             custom: builder.custom,
         }
     }
