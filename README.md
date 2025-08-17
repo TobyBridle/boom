@@ -25,6 +25,14 @@ tools should be rewritten in other languages - particularly Rust. Rust is the la
 
 **Using `boom` as a systemd service**
 
+> [!NOTE]
+> Config changes do not require a restart of `boom` (when changing existing bangs/adding new ones).
+> Hot-reloading allows `boom` to configure bangs on-the-fly without a server restart. The only time a restart would
+> be required is to:
+>
+> - Change the server address, port, or security (http vs https)
+> - Remove bangs
+
 ```
 [Unit]
 Description=Boom Redirection Service (DuckDuckGo bangs to real search)
@@ -74,6 +82,7 @@ boom resolve '!boom'
 #            ^ to prevent shell globbing
 
 # Resolve using a non-default config
+# Note: hot-reloading will not work when using a non-standard config location
 boom -c <path-to-custom-config> resolve
 ```
 
