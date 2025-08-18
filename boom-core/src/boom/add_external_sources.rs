@@ -52,10 +52,10 @@ pub async fn add_external_sources(
                 .to_str()
                 .ok_or_else(|| format!("Could not convert {} into str", source.filepath.display()))
                 .map_or_else(
-                    |filepath_str| {
-                        expanduser(&filepath_str).unwrap_or_else(|_| source.filepath.clone())
-                    },
                     |_| source.filepath.clone(),
+                    |filepath_str| {
+                        expanduser(filepath_str).unwrap_or_else(|_| source.filepath.clone())
+                    },
                 );
 
             match parse_bang_file(&filepath) {
