@@ -106,4 +106,8 @@ impl ConfigSource for Args {
         }
         Ok(builder)
     }
+
+    fn source(&self) -> Option<&PathBuf> {
+        None
+    }
 }

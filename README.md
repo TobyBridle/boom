@@ -82,7 +82,6 @@ boom resolve '!boom'
 #            ^ to prevent shell globbing
 
 # Resolve using a non-default config
-# Note: hot-reloading will not work when using a non-standard config location
 boom -c <path-to-custom-config> resolve
 ```
 

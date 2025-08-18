@@ -10,6 +10,7 @@ use crate::{
 };
 
 /// Updates internal caches for bangs from the given configuration
+///
 /// If `overwrite` is specified, [`update_redirect`] will be used, otherwise, if `overwrite` is
 /// false, each bang will attempt to be inserted using [`insert_bang`] and [`set_redirects`]
 pub async fn update_bangs_from_config(

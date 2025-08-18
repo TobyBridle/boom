@@ -100,15 +100,19 @@ pub async fn serve(address: IpAddr, port: u16, config: &Config) {
     // NOTE: Hot-reloading only works using the default config path!
     let shared_config = Arc::clone(&state.shared_config);
     tokio::spawn(async move {
+        let config_path = shared_config.read().map_or_else(
+            |_| get_default_config_path(),
+            |cfg| cfg.config_source.clone(),
+        );
+
+        info!("Awaiting changes on {}", config_path.display());
+
         let (tx, rx) = std::sync::mpsc::channel();
         let mut watcher =
             RecommendedWatcher::new(tx, notify::Config::default().with_compare_contents(true))
                 .unwrap();
         watcher
-            .watch(
-                &get_default_config_path(),
-                notify::RecursiveMode::NonRecursive,
-            )
+            .watch(&config_path, notify::RecursiveMode::NonRecursive)
             .unwrap();
         for res in rx {
             match res {
@@ -122,7 +126,7 @@ pub async fn serve(address: IpAddr, port: u16, config: &Config) {
 
                     if let Ok(mut write_lock) = shared_config.write() {
                         let config = ConfigBuilder::new()
-                            .add_source(&get_default_config_path())
+                            .add_source(&config_path)
                             .to_owned()
                             .build();
                         *write_lock = config;

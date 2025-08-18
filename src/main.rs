@@ -67,15 +67,9 @@ async fn main() -> std::io::Result<()> {
         exit(1);
     }
 
-    let config = &args
-        .config
-        .read_into_builder()
-        .unwrap_or_else(|e| {
-            eprintln!("Could not read Config. Reason: {e:?}");
-            eprintln!("Falling back to default config.");
-            ConfigBuilder::default()
-        })
+    let config = ConfigBuilder::new()
         .add_source(args.as_ref())
+        .add_source(&args.config)
         .to_owned()
         .build();
 
@@ -100,10 +94,10 @@ async fn main() -> std::io::Result<()> {
                 boom_core::await_internet().await;
             }
 
-            serve(*addr, *port, config).await;
+            serve(*addr, *port, &config).await;
         }
         LaunchType::Resolve { search_query, .. } => {
-            println!("Resolved: {:?}", resolve(search_query.as_str(), config));
+            println!("Resolved: {:?}", resolve(search_query.as_str(), &config));
         }
         _ => {}
     }

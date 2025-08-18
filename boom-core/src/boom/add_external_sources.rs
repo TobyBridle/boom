@@ -47,18 +47,18 @@ pub async fn add_external_sources(
                 }
             }
 
-            let filepath =
-                if let Ok(filepath_str) = source.filepath.to_str().ok_or_else(|| {
-                    format!("Could not convert {} into str", source.filepath.display())
-                }) && let Ok(p) = expanduser(filepath_str)
-                {
-                    &p.clone()
-                } else {
-                    warn!("Could not expand {source}. Continuing with path as is.");
-                    &source.filepath
-                };
+            let filepath = source
+                .filepath
+                .to_str()
+                .ok_or_else(|| format!("Could not convert {} into str", source.filepath.display()))
+                .map_or_else(
+                    |filepath_str| {
+                        expanduser(&filepath_str).unwrap_or_else(|_| source.filepath.clone())
+                    },
+                    |_| source.filepath.clone(),
+                );
 
-            match parse_bang_file(filepath) {
+            match parse_bang_file(&filepath) {
                 Ok(bangs) => {
                     info!("Loaded {} bangs from source {}", bangs.len(), source);
                     bangs

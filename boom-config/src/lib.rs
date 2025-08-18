@@ -3,7 +3,7 @@ use std::{
     env,
     fmt::Display,
     net::{IpAddr, Ipv4Addr},
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
 
 use merge::Merge;
@@ -19,6 +19,7 @@ pub struct Assets;
 
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct Config {
+    pub config_source: PathBuf,
     pub server: ServerConfig,
     pub bangs: BangConfig,
 }
@@ -129,6 +130,9 @@ pub struct BangCustomConfig {
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Merge, Deserialize)]
 pub struct ConfigBuilder {
+    #[merge(skip)]
+    #[serde(skip_deserializing)]
+    config_source: PathBuf,
     #[merge(strategy = merge::option::overwrite_none)]
     server: Option<ServerConfigBuilder>,
     #[merge(strategy = merge::option::overwrite_none)]
@@ -178,6 +182,9 @@ pub trait ConfigSource {
     /// - a non-existent file
     /// - a config which is not of the correct syntax
     fn read_into_builder(&self) -> Result<ConfigBuilder, Box<dyn std::error::Error>>;
+
+    /// Allows the builder to set the [`ConfigBuilder::config_source`] implicitly
+    fn source(&self) -> Option<&PathBuf>;
 }
 
 impl ConfigBuilder {
@@ -190,6 +197,9 @@ impl ConfigBuilder {
         match source.read_into_builder() {
             Ok(builder) => {
                 self.merge(builder);
+                if let Some(src) = source.source() {
+                    self.set_config_source(src);
+                }
             }
             Err(e) => error!(e),
         }
@@ -233,9 +243,15 @@ impl ConfigBuilder {
         self
     }
 
+    pub fn set_config_source(&mut self, path: &Path) -> &mut Self {
+        self.config_source = path.to_path_buf();
+        self
+    }
+
     #[must_use]
     pub fn build(self) -> Config {
         Config {
+            config_source: self.config_source,
             server: self.server.unwrap_or_default().into(),
             bangs: self.bangs.unwrap_or_default().into(),
         }
@@ -320,6 +336,7 @@ impl From<BangSourceConfigBuilder> for BangSourceConfig {
 impl From<Config> for ConfigBuilder {
     fn from(config: Config) -> Self {
         Self {
+            config_source: config.config_source,
             server: Some(config.server.into()),
             bangs: Some(config.bangs.into()),
         }
