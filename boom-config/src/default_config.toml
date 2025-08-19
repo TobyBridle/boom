@@ -33,3 +33,7 @@ boomdev = { template = "https://github.com/tobybridle/boom", trigger = "boomdev"
 # `!amazedev boom` resolves to the url for this project!
 template = "https://github.com/tobybridle/{{{s}}}"
 trigger = "amazedev"
+
+[bangs.custom.boom_bangs]
+template = "http://127.0.0.1:3000/bangs"
+trigger = "bangs"
