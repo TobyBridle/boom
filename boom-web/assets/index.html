@@ -62,13 +62,62 @@
         </label>
       </form>
       <footer>
-        <div class="info-box">
-          <h2>Struggling?</h2>  
-          <p>Unsure of how to use bangs? Try <pre>!w DuckDuckGo#Bangs</pre></p>
-        </div>
-        <div class="info-box">
-          <h2>View your Bangs</h2>  
-          <p>View/add your own bangs <a id="view-bang" href="/bangs">here</a>
+        <div class="cards-container">
+          <div class="card" id="helpCard">
+            <div class="card-header">
+              <div class="card-icon">
+                <span>?</span>
+              </div>
+              <div>
+                <h2 class="card-title">Struggling?</h2>
+                <p class="card-subtitle">Need help with bangs?</p>
+              </div>
+            </div>
+
+            <div class="card-content">
+              <p>
+                Unsure of how to use bangs?<br />Bangs are shortcuts that
+                quickly take you to search results on other sites.
+              </p>
+
+              <div class="help-content">
+                <p>Try this example:</p>
+                <pre>!w DuckDuckGo#Bangs</pre>
+                <p class="help-subtitle">
+                  This will search Wikipedia for "DuckDuckGo#Bangs"
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" id="bangsCard">
+            <div class="card-header">
+              <div class="card-icon">
+                <span>⚙</span>
+              </div>
+              <div>
+                <h2 class="card-title">View your Bangs</h2>
+                <p class="card-subtitle">Manage custom shortcuts</p>
+              </div>
+            </div>
+
+            <div class="card-content">
+              <p>
+                View a list of bangs accessible to you by clicking
+                <a href="/bangs" class="card-link" id="view-bang">here</a>
+              </p>
+              <p>
+                The default config imports bangs from
+                <a href="https://duckduckgo.com/bang.js" class="card-link"
+                  >DuckDuckGo's default list</a
+                >
+              </p>
+              <div class="help-content">
+                <p>Alternatively, you can view your available bangs using:</p>
+                <pre>!bangs</pre>
+              </div>
+            </div>
+          </div>
         </div>
       </footer>
     </div>
