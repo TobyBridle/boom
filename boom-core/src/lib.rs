@@ -45,3 +45,12 @@ pub async fn await_internet() {
         std::thread::sleep(Duration::from_secs(5));
     }
 }
+
+pub type EncodedQuery = (String /* bang */, String /* query */);
+
+#[cfg(feature = "history")]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct HistoryEntry {
+    pub query: EncodedQuery,
+    pub timestamp: i64,
+}

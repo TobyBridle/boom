@@ -6,7 +6,7 @@ use serde::Serialize;
 use crate::AppState;
 
 #[derive(Serialize, Debug)]
-pub struct TemplateData {
+struct TemplateData {
     bangs: Vec<Redirect>,
 }
 

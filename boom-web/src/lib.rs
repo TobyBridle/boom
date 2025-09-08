@@ -3,6 +3,8 @@
 //! Whilst [`boom_core`] provides the tools to crunch data, `boom-web` provides the user-facing
 //! functions to display awesome web pages.
 
+#[cfg(feature = "history")]
+use std::time::Duration;
 use std::{
     net::{IpAddr, SocketAddr},
     sync::{Arc, RwLock},
@@ -25,7 +27,12 @@ use tokio::net::TcpListener;
 use tower::util::Either;
 use tracing::{error, info};
 
+#[cfg(feature = "history")]
+use crate::routes::history::list_history;
 use crate::routes::suggest::suggest;
+
+#[cfg(feature = "history")]
+mod history;
 
 mod routes;
 
@@ -90,6 +97,10 @@ pub async fn serve(address: IpAddr, port: u16, config: &Config) {
     hbs.register_template_string("/bangs", include_str!("../assets/bangs/index.html"))
         .expect("Template should be syntactically correct");
 
+    #[cfg(feature = "history")]
+    hbs.register_template_string("/history", include_str!("../assets/history/index.html"))
+        .expect("Template should be syntactically correct");
+
     let shared_config = RwLock::from(config.clone());
 
     let state = AppState {
@@ -99,6 +110,13 @@ pub async fn serve(address: IpAddr, port: u16, config: &Config) {
 
     // NOTE: Hot-reloading only works using the default config path!
     let shared_config = Arc::clone(&state.shared_config);
+
+    #[cfg(feature = "history")]
+    tokio::spawn(async move {
+        use crate::history::save_history;
+        save_history(Duration::from_secs(60)).await;
+    });
+
     tokio::spawn(async move {
         let config_path = shared_config.read().map_or_else(
             |_| get_default_config_path(),
@@ -146,7 +164,7 @@ pub async fn serve(address: IpAddr, port: u16, config: &Config) {
         }
     });
 
-    let router = Router::new()
+    let mut router = Router::new()
         .route("/", get(redirector))
         .route("/bangs", get(list_bangs))
         .route("/suggest", get(suggest))
@@ -155,8 +173,12 @@ pub async fn serve(address: IpAddr, port: u16, config: &Config) {
         .route(
             "/sw.js",
             get(|| async { asset_handler(Path("bangs/sw.js".to_string())).await }),
-        )
-        .with_state(state);
+        );
+
+    #[cfg(feature = "history")]
+    {
+        router = router.route("/history", get(list_history));
+    }
 
     let addr = SocketAddr::new(address, port);
     let listener = match TcpListener::bind(addr).await {
@@ -166,7 +188,7 @@ pub async fn serve(address: IpAddr, port: u16, config: &Config) {
         }
     };
     info!(name:"Boom", "Server running on {addr}");
-    axum::serve(listener, router.into_make_service())
+    axum::serve(listener, router.with_state(state).into_make_service())
         .await
         .unwrap();
 }

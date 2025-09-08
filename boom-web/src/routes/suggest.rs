@@ -5,10 +5,23 @@ use axum::{
     response::IntoResponse,
 };
 use reqwest::Client;
+
+#[cfg(feature = "history-suggestions")]
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
+#[cfg(feature = "history-suggestions")]
+use tracing::debug;
+
 use tracing::error;
 
 use crate::{AppState, routes::index::SearchParams};
+
+#[cfg(feature = "history-suggestions")]
+#[derive(Debug, Serialize, Deserialize)]
+struct Suggestions {
+    keyword: String,
+    suggestions: Vec<String>,
+}
 
 /// [`suggest`] provides search suggestions for the browser, acting as a proxy for an existing
 /// suggestions provider.
@@ -59,7 +72,30 @@ pub async fn suggest(
                 error!("Could not parse response json.");
                 bad_request()
             },
-            |json| (StatusCode::OK, headers.clone(), Json(json)),
+            |json| {
+                #[cfg(feature = "history-suggestions")]
+                let json = {
+                    use boom_core::cache::SEARCH_HISTORY_CACHE;
+
+                    let mut j = serde_json::from_value::<Suggestions>(json)
+                        .expect("API result should be valid suggestions");
+                    SEARCH_HISTORY_CACHE
+                        .try_read()
+                        .unwrap()
+                        .iter()
+                        .for_each(|h| {
+                            dbg!(&h.query.1, &query);
+                            if h.query.1.starts_with(query.as_str()) {
+                                debug!("Injecting suggestion into those from {url}");
+                                debug!("Query: {query}");
+                                debug!("Suggestion: {:?}", &h.query.1);
+                                j.suggestions.insert(0, h.query.1.clone())
+                            }
+                        });
+                    serde_json::to_value(j).unwrap()
+                };
+                (StatusCode::OK, headers.clone(), Json(json))
+            },
         )
     } else {
         error!("Could not parse response json.");

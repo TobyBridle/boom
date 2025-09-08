@@ -6,12 +6,18 @@ use std::{
 
 use tracing::info;
 
+#[cfg(feature = "history")]
+use crate::HistoryEntry;
 use crate::Redirect;
 
 pub static CACHE: LazyLock<RwLock<HashMap<String, usize>>> =
     LazyLock::new(|| RwLock::new(HashMap::with_capacity(128)));
 
 static REDIRECT_LIST: LazyLock<RwLock<Vec<Redirect>>> = LazyLock::new(|| RwLock::new(vec![]));
+
+#[cfg(feature = "history")]
+pub static SEARCH_HISTORY_CACHE: LazyLock<RwLock<Vec<HistoryEntry>>> =
+    LazyLock::new(|| RwLock::new(vec![]));
 
 /// Initialises the list of redirects, unless specified otherwise using `overwrite`.
 ///
@@ -123,5 +129,28 @@ pub fn update_redirect(redirect: &Redirect) -> Result<(), Box<dyn std::error::Er
     }
     drop(write_lock);
 
+    Ok(())
+}
+
+/// Set the value of the global `SEARCH_HISTORY_CACHE`.
+/// **This does not append, it overwrites.**
+///
+/// # Errors
+/// This function will error if the `try_write` call fails.
+/// Please check the documentation of [`std::sync::poison::rwlock::RwLock::try_write`] for more info
+#[cfg(feature = "history")]
+pub fn set_history_queries(queries: &[HistoryEntry]) -> Result<(), Box<dyn std::error::Error>> {
+    (*SEARCH_HISTORY_CACHE.try_write()?) = queries.to_vec();
+    Ok(())
+}
+
+/// Pushes onto the vector [`SEARCH_HISTORY_CACHE`].
+///
+/// # Errors
+/// This function will error if the `try_write` call fails.
+/// Please check the documentation of [`std::sync::poison::rwlock::RwLock::try_write`] for more info
+#[cfg(feature = "history")]
+pub fn add_history_query(query: HistoryEntry) -> Result<(), Box<dyn std::error::Error>> {
+    SEARCH_HISTORY_CACHE.try_write()?.push(query);
     Ok(())
 }

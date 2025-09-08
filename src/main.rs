@@ -83,6 +83,11 @@ async fn main() -> std::io::Result<()> {
     )
     .await;
 
+    #[cfg(feature = "history")]
+    if let Err(e) = import_history_data() {
+        error!(e);
+    }
+
     #[allow(clippy::match_wildcard_for_single_variants)]
     match &args.launch {
         LaunchType::Serve {
@@ -103,4 +108,59 @@ async fn main() -> std::io::Result<()> {
     }
 
     Ok(())
+}
+
+#[cfg(feature = "history")]
+fn import_history_data() -> Result<(), Box<dyn std::error::Error>> {
+    use std::fs::File;
+
+    use boom_config::get_default_config_path;
+    use boom_core::HistoryEntry;
+    use boom_core::cache::set_history_queries;
+    use parquet::file::reader::{FileReader, Length, SerializedFileReader};
+    use parquet::record::RowAccessor;
+    use tracing::warn;
+
+    let hist_file_path = get_default_config_path()
+        .parent()
+        .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "No parent directory"))?
+        .join("hist_file.parquet");
+    let hist_file = File::open(&hist_file_path)?;
+
+    if hist_file.len() == 0 {
+        warn!(
+            "Hist file at {} is empty. Skipping parsing.",
+            &hist_file_path.display()
+        );
+        Ok(())
+    } else {
+        let sf_reader = SerializedFileReader::new(hist_file)?;
+        let mut row = sf_reader.get_row_iter(None)?;
+
+        let mut queries: Vec<HistoryEntry> = vec![];
+
+        info!("Loading hist file from {}", hist_file_path.display());
+        while let Some(r) = row.next()
+            && let Ok(r) = r
+            && let Ok(bang) = r.get_string(0)
+            && let Ok(query) = r.get_string(1)
+            && let Ok(timestamp) = r.get_long(2)
+        {
+            queries.push(HistoryEntry {
+                query: (bang.clone(), query.clone()),
+                timestamp,
+            });
+        }
+
+        if let Err(e) = set_history_queries(&queries) {
+            error!("Could not set the history queries. Reason: {e:?}");
+            Err(Box::from("Could not set history queries"))
+        } else if queries.is_empty() {
+            warn!("Hist file exists but does not contain any entries. Does the schema match?");
+            Ok(())
+        } else {
+            info!("Loaded {} item(s) from hist file", queries.len());
+            Ok(())
+        }
+    }
 }

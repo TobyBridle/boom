@@ -23,6 +23,9 @@ pub fn resolve(query: &str, config: &Config) -> String {
 
     parse_bang_indexes(query).map_or_else(
         || {
+            #[cfg(feature = "history")]
+            add_to_history_cache(None, &urlencoding::encode(query).replace("%2F", "/"));
+
             concat_string!(
                 template[..indexes.start],
                 urlencoding::encode(query).replace("%2F", "/"),
@@ -37,6 +40,9 @@ pub fn resolve(query: &str, config: &Config) -> String {
                 &query[(bang_idx.end + 1).clamp(1, query.len())..]
             );
             let encoded_query = urlencoding::encode(query.as_str()).replace("%2F", "/");
+
+            #[cfg(feature = "history")]
+            add_to_history_cache(Some(bang.to_string()), &encoded_query);
 
             let Some(redirect_idx) = get_bang(bang).unwrap() else {
                 eprintln!("Bang ({bang}) could not be found in cache. Assuming default search.");
@@ -145,5 +151,26 @@ mod tests {
             resolve(query, &Config::default()),
             "https://github.com/tobybridle/boom"
         );
+    }
+}
+
+#[cfg(feature = "history")]
+fn add_to_history_cache(bang: Option<String>, query: &str) {
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    use crate::{HistoryEntry, cache::add_history_query};
+    if let Err(e) = add_history_query(HistoryEntry {
+        query: (bang.unwrap_or_default(), query.to_string()),
+        timestamp: i64::try_from(
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .expect("Time went backwards")
+                .as_millis(),
+        )
+        .expect("Timestamp should not overflow i64"), // Please don't be using this in like 2125
+    }) {
+        use tracing::warn;
+
+        warn!("Failure adding {query} into in-memory history. Reason: {e:?}");
     }
 }

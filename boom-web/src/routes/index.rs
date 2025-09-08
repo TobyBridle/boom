@@ -12,8 +12,6 @@ use tracing::info;
 
 use crate::{AppState, EitherResponse};
 
-use super::bangs::TemplateData;
-
 #[derive(Deserialize)]
 pub struct SearchParams {
     #[serde(rename = "q")]
@@ -39,7 +37,7 @@ pub async fn redirector(
         info!("Redirecting to {resolved} took {:?}", timer.elapsed());
         Either::Left(Redirect::to(resolved.as_str()))
     } else {
-        Either::Right(RenderHtml("/", state.engine, TemplateData::default()))
+        Either::Right(RenderHtml("/", state.engine, ""))
     };
 
     EitherResponse(res)
