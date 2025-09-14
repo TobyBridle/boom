@@ -112,10 +112,57 @@ pub async fn serve(address: IpAddr, port: u16, config: &Config) {
     let shared_config = Arc::clone(&state.shared_config);
 
     #[cfg(feature = "history")]
-    tokio::spawn(async move {
-        use crate::history::save_history;
-        save_history(Duration::from_secs(60)).await;
-    });
+    {
+        use tokio::signal::unix::{SignalKind, signal};
+
+        let mut sigterm =
+            signal(SignalKind::terminate()).expect("Process should be able to listen to signals");
+        let mut sigint =
+            signal(SignalKind::interrupt()).expect("Process should be able to listen to signals");
+        let mut sigusr1 = signal(SignalKind::user_defined1())
+            .expect("Process should be able to listen to signals");
+
+        tokio::spawn(async move {
+            use tokio::time::{Instant, interval_at};
+
+            use crate::history::save_history;
+            let mut history_save_interval = interval_at(
+                Instant::now() + Duration::from_secs(60),
+                Duration::from_secs(60),
+            );
+            loop {
+                history_save_interval.tick().await;
+                save_history().await;
+            }
+        });
+
+        tokio::spawn(async move {
+            loop {
+                use std::process::exit;
+
+                use tokio::select;
+
+                use crate::history::save_history;
+
+                select! {
+                    _ = sigint.recv() => {
+                        info!("Attempting to save history before quitting");
+                        save_history().await;
+                        exit(1);
+                    }
+                    _ = sigterm.recv() => {
+                        info!("Attempting to save history before quitting");
+                        save_history().await;
+                        exit(1);
+                    }
+                    _ = sigusr1.recv() => {
+                        info!("Force saving history");
+                        save_history().await;
+                    }
+                }
+            }
+        });
+    }
 
     tokio::spawn(async move {
         let config_path = shared_config.read().map_or_else(
