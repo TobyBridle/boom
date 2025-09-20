@@ -1,10 +1,17 @@
-use axum::{extract::State, http::header::CONTENT_TYPE, response::Response};
+use axum::{
+    extract::{Query, State},
+    http::header::CONTENT_TYPE,
+    response::Response,
+};
 
-use crate::AppState;
+use crate::{AppState, routes::index::SearchParams};
 
 /// [`opensearch`] provides an XML response allowing browsers to add `boom` as a search-engine.
 /// This is done via the `OpenSearchDescription` tag, from the [OpenSearch 1.1 Namespace](http://a9.com/-/spec/opensearch/1.1/)
-pub async fn opensearch(State(state): State<AppState>) -> Response<String> {
+pub async fn opensearch(
+    State(state): State<AppState>,
+    Query(params): Query<SearchParams>,
+) -> Response<String> {
     let cfg = state
         .shared_config
         .try_read()
@@ -21,13 +28,13 @@ r#"
   <InputEncoding>UTF-8</InputEncoding>
   <Image width="16" height="16" type="image/x-icon">{ICON_ICO}</Image>
   <Image width="32" height="32" type="image/png">{ICON_32}</Image>
-  <Url type="text/html" template="http{is_secure}://{address}:{port}/?q={{searchTerms}}"/>
-  <Url type="application/x-suggestions+json" method="GET" template="http{is_secure}://{address}:{port}/suggest?q={{searchTerms}}" />
+  <Url type="text/html" template="http{is_secure}://{address}:{port}/?q={{searchTerms}}&amp;si={source_identifier}" />
+  <Url type="application/x-suggestions+json" method="GET" template="http{is_secure}://{address}:{port}/suggest?q={{searchTerms}}&amp;si={source_identifier}" />
 <Url
   type="application/opensearchdescription+xml"
   rel="self"
-  template="http{is_secure}://{address}:{port}/opensearch.xml" />
-</OpenSearchDescription>"#, is_secure = if cfg.server.is_secure { "s"} else {""}, address = cfg.server.address, port = cfg.server.port
+  template="http{is_secure}://{address}:{port}/opensearch.xml&amp;si={source_identifier}" />
+</OpenSearchDescription>"#, is_secure = if cfg.server.is_secure { "s"} else {""}, address = cfg.server.address, port = cfg.server.port, source_identifier = Into::<String>::into(params.source_identifier.unwrap_or_default())
     ))
         .unwrap()
 }

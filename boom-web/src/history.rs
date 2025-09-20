@@ -1,7 +1,6 @@
-use std::{fs::File, sync::Arc, time::Duration};
+use std::{fs::File, sync::Arc};
 
 use boom_config::get_default_config_path;
-use tokio::time::{Instant, interval_at};
 use tracing::info;
 
 use std::{fs::OpenOptions, io};
@@ -20,65 +19,67 @@ use parquet::{
 const SCHEMA_STR: &str = "message schema {
         REQUIRED BINARY bang (UTF8);
         REQUIRED BINARY query (UTF8);
+        REQUIRED BINARY source_identifier (UTF8);
         REQUIRED INT64 timestamp;
     }";
 
-pub async fn save_history(interval: Duration) {
-    let mut history_save_interval = interval_at(Instant::now() + interval, interval);
-    loop {
-        history_save_interval.tick().await;
-        info!("Updating search history save");
+pub async fn save_history() {
+    info!("Updating search history save");
 
-        let rlock = SEARCH_HISTORY_CACHE
-            .read()
-            .expect("Search History Cache should be readable");
-        if rlock.is_empty() {
-            continue;
-        }
-
-        let hist_file_path = get_default_config_path()
-            .parent()
-            .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "No parent directory"))
-            .unwrap()
-            .join("hist_file.parquet");
-        let hist_file = OpenOptions::new()
-            .create(true)
-            .write(true)
-            .truncate(true)
-            .open(&hist_file_path)
-            .expect("History file should be writeable");
-        let mut writer = SerializedFileWriter::new(
-            hist_file,
-            Arc::new(parse_message_type(SCHEMA_STR).unwrap()),
-            WriterPropertiesBuilder::default()
-                .set_compression(parquet::basic::Compression::BROTLI(
-                    BrotliLevel::try_new(4).unwrap(),
-                ))
-                .build()
-                .into(),
-        )
-        .unwrap();
-
-        let mut row_group_writer = writer.next_row_group().unwrap();
-
-        write_column::<_, ByteArray, ByteArrayType>(&rlock, &mut row_group_writer, |hist| {
-            ByteArray::from(hist.query.0.as_str())
-        })
-        .and_then(|()| {
-            write_column::<_, ByteArray, ByteArrayType>(&rlock, &mut row_group_writer, |hist| {
-                ByteArray::from(hist.query.1.as_str())
-            })
-        })
-        .and_then(|()| {
-            write_column::<_, _, Int64Type>(&rlock, &mut row_group_writer, |hist| hist.timestamp)
-        })
-        .expect("Could not write history entry into column");
-
-        row_group_writer.close().unwrap();
-        writer.close().unwrap();
-
-        drop(rlock);
+    let rlock = SEARCH_HISTORY_CACHE
+        .read()
+        .expect("Search History Cache should be readable");
+    if rlock.is_empty() {
+        return;
     }
+
+    let hist_file_path = get_default_config_path()
+        .parent()
+        .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "No parent directory"))
+        .unwrap()
+        .join("hist_file.parquet");
+    let hist_file = OpenOptions::new()
+        .create(true)
+        .write(true)
+        .truncate(true)
+        .open(&hist_file_path)
+        .expect("History file should be writeable");
+    let mut writer = SerializedFileWriter::new(
+        hist_file,
+        Arc::new(parse_message_type(SCHEMA_STR).unwrap()),
+        WriterPropertiesBuilder::default()
+            .set_compression(parquet::basic::Compression::BROTLI(
+                BrotliLevel::try_new(4).unwrap(),
+            ))
+            .build()
+            .into(),
+    )
+    .unwrap();
+
+    let mut row_group_writer = writer.next_row_group().unwrap();
+
+    write_column::<_, ByteArray, ByteArrayType>(&rlock, &mut row_group_writer, |hist| {
+        ByteArray::from(hist.query.0.as_str())
+    })
+    .and_then(|()| {
+        write_column::<_, ByteArray, ByteArrayType>(&rlock, &mut row_group_writer, |hist| {
+            ByteArray::from(hist.query.1.as_str())
+        })
+    })
+    .and_then(|()| {
+        write_column::<_, ByteArray, ByteArrayType>(&rlock, &mut row_group_writer, |hist| {
+            ByteArray::from(String::from(hist.source_identifier.clone()).as_str())
+        })
+    })
+    .and_then(|()| {
+        write_column::<_, _, Int64Type>(&rlock, &mut row_group_writer, |hist| hist.timestamp)
+    })
+    .expect("Could not write history entry into column");
+
+    row_group_writer.close().unwrap();
+    writer.close().unwrap();
+
+    drop(rlock);
 }
 
 fn write_column<T, S, W>(

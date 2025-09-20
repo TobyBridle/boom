@@ -27,7 +27,10 @@ use std::{
 };
 
 use boom_config::{ConfigBuilder, ConfigSource};
-use boom_core::boom::{resolver::resolve, update_bangs_from_config::update_bangs_from_config};
+use boom_core::{
+    SourceIdentifier,
+    boom::{resolver::resolve, update_bangs_from_config::update_bangs_from_config},
+};
 use boom_web::serve;
 use clap::Parser;
 use cli::{LaunchType, SetupMode};
@@ -102,7 +105,10 @@ async fn main() -> std::io::Result<()> {
             serve(*addr, *port, &config).await;
         }
         LaunchType::Resolve { search_query, .. } => {
-            println!("Resolved: {:?}", resolve(search_query.as_str(), &config));
+            println!(
+                "Resolved: {:?}",
+                resolve(search_query.as_str(), &config, &SourceIdentifier::default())
+            );
         }
         _ => {}
     }
@@ -144,11 +150,13 @@ fn import_history_data() -> Result<(), Box<dyn std::error::Error>> {
             && let Ok(r) = r
             && let Ok(bang) = r.get_string(0)
             && let Ok(query) = r.get_string(1)
-            && let Ok(timestamp) = r.get_long(2)
+            && let Ok(source_identifier) = r.get_string(2)
+            && let Ok(timestamp) = r.get_long(3)
         {
             queries.push(HistoryEntry {
                 query: (bang.clone(), query.clone()),
                 timestamp,
+                source_identifier: source_identifier.clone().into(),
             });
         }
 

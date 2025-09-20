@@ -2,6 +2,7 @@ use boom_config::Config;
 use concat_string::concat_string;
 
 use crate::{
+    SourceIdentifier,
     boom::Match,
     cache::{get_bang, get_redirects},
 };
@@ -13,7 +14,7 @@ use super::{parse_bangs::parse_bang_indexes, parse_templates::parse_template_ind
 /// # Panics
 /// Panics if the query is an empty string.
 #[must_use]
-pub fn resolve(query: &str, config: &Config) -> String {
+pub fn resolve(query: &str, config: &Config, source_identifier: &SourceIdentifier) -> String {
     assert!(!query.is_empty());
 
     let template = config.bangs.default_search_template.as_str();
@@ -24,7 +25,7 @@ pub fn resolve(query: &str, config: &Config) -> String {
     parse_bang_indexes(query).map_or_else(
         || {
             #[cfg(feature = "history")]
-            add_to_history_cache(None, &urlencoding::encode(query).replace("%2F", "/"));
+            add_to_history_cache(None, &query.replace("%2F", "/"), source_identifier);
 
             concat_string!(
                 template[..indexes.start],
@@ -42,7 +43,7 @@ pub fn resolve(query: &str, config: &Config) -> String {
             let encoded_query = urlencoding::encode(query.as_str()).replace("%2F", "/");
 
             #[cfg(feature = "history")]
-            add_to_history_cache(Some(bang.to_string()), &encoded_query);
+            add_to_history_cache(Some(bang.to_string()), &query, source_identifier);
 
             let Some(redirect_idx) = get_bang(bang).unwrap() else {
                 eprintln!("Bang ({bang}) could not be found in cache. Assuming default search.");
@@ -81,7 +82,7 @@ mod tests {
 
     #[allow(unused_imports)]
     use crate::{
-        Redirect,
+        Redirect, SourceIdentifier,
         boom::{Match, resolver::resolve},
         cache::{init_list, insert_bang},
     };
@@ -90,7 +91,7 @@ mod tests {
     fn test_resolve_no_bang() {
         let query = "test query";
         assert_eq!(
-            resolve(query, &Config::default()),
+            resolve(query, &Config::default(), &SourceIdentifier::default()),
             "https://google.com/search?q=test%20query"
         );
     }
@@ -110,7 +111,7 @@ mod tests {
 
         let query = "!yt test query";
         assert_eq!(
-            resolve(query, &Config::default()),
+            resolve(query, &Config::default(), &SourceIdentifier::default()),
             "https://youtube.com/results?search_query=test%20query"
         );
     }
@@ -128,7 +129,7 @@ mod tests {
         .unwrap();
         let query = "test query !yt";
         assert_eq!(
-            resolve(query, &Config::default()),
+            resolve(query, &Config::default(), &SourceIdentifier::default()),
             "https://youtube.com/results?search_query=test%20query"
         );
     }
@@ -148,14 +149,14 @@ mod tests {
 
         let query = "tobybridle/boom !gh";
         assert_eq!(
-            resolve(query, &Config::default()),
+            resolve(query, &Config::default(), &SourceIdentifier::default()),
             "https://github.com/tobybridle/boom"
         );
     }
 }
 
 #[cfg(feature = "history")]
-fn add_to_history_cache(bang: Option<String>, query: &str) {
+fn add_to_history_cache(bang: Option<String>, query: &str, source_identifier: &SourceIdentifier) {
     use std::time::{SystemTime, UNIX_EPOCH};
 
     use crate::{HistoryEntry, cache::add_history_query};
@@ -168,6 +169,7 @@ fn add_to_history_cache(bang: Option<String>, query: &str) {
                 .as_millis(),
         )
         .expect("Timestamp should not overflow i64"), // Please don't be using this in like 2125
+        source_identifier: source_identifier.clone(),
     }) {
         use tracing::warn;
 

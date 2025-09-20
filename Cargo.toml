@@ -2,7 +2,7 @@
 members = ["boom-config", "boom-core", "boom-web"]
 
 [workspace.package]
-version = "0.2.1"
+version = "0.3.0"
 description = "A speedy Rust implemenatation of DuckDuckGo's Bang system"
 authors = ["Toby Bridle <bridle.toby@gmail.com>"]
 repository = "https://github.com/TobyBridle/boom"

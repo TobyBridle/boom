@@ -9,8 +9,6 @@ use reqwest::Client;
 #[cfg(feature = "history-suggestions")]
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-#[cfg(feature = "history-suggestions")]
-use tracing::debug;
 
 use tracing::error;
 
@@ -75,24 +73,39 @@ pub async fn suggest(
             |json| {
                 #[cfg(feature = "history-suggestions")]
                 let json = {
+                    use boom_core::SourceIdentifier;
                     use boom_core::cache::SEARCH_HISTORY_CACHE;
 
                     let mut j = serde_json::from_value::<Suggestions>(json)
                         .expect("API result should be valid suggestions");
-                    SEARCH_HISTORY_CACHE
-                        .try_read()
-                        .unwrap()
-                        .iter()
-                        .for_each(|h| {
-                            dbg!(&h.query.1, &query);
-                            if h.query.1.starts_with(query.as_str()) {
-                                debug!("Injecting suggestion into those from {url}");
-                                debug!("Query: {query}");
-                                debug!("Suggestion: {:?}", &h.query.1);
-                                j.suggestions.insert(0, h.query.1.clone())
+                    {
+                        let mut cache = SEARCH_HISTORY_CACHE.try_write().unwrap();
+                        cache.sort_by(|a, b| {
+                            // Check if a or b matches the source identifier
+                            let param_si = match params.source_identifier {
+                                Some(ref si) => si,
+                                None => &SourceIdentifier::Empty,
+                            };
+
+                            let a_matches = &a.source_identifier == param_si;
+                            let b_matches = &b.source_identifier == param_si;
+
+                            use std::cmp::Ordering;
+
+                            match (a_matches, b_matches) {
+                                (true, false) => Ordering::Greater, // a goes before b
+                                (false, true) => Ordering::Less,    // b goes before a
+                                _ => a.source_identifier.cmp(&b.source_identifier),
                             }
                         });
-                    serde_json::to_value(j).unwrap()
+
+                        cache.iter().for_each(|h| {
+                            if h.query.1.starts_with(query.as_str()) {
+                                j.suggestions.insert(0, h.query.1.clone());
+                            }
+                        });
+                    }
+                    serde_json::json!([j.keyword, j.suggestions])
                 };
                 (StatusCode::OK, headers.clone(), Json(json))
             },

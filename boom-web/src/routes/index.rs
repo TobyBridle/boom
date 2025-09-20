@@ -5,17 +5,25 @@ use axum::{
     response::{IntoResponse, Redirect},
 };
 use axum_template::RenderHtml;
-use boom_core::boom::resolver::resolve;
-use serde::Deserialize;
+use boom_core::{SourceIdentifier, boom::resolver::resolve};
+use serde::{Deserialize, Serialize};
 use tower::util::Either;
 use tracing::info;
 
 use crate::{AppState, EitherResponse};
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct SearchParams {
     #[serde(rename = "q")]
     pub(crate) query: Option<String>,
+
+    #[serde(rename = "si")]
+    pub(crate) source_identifier: Option<SourceIdentifier>,
+}
+
+#[derive(Serialize)]
+struct TemplateData {
+    source_identifier: String,
 }
 
 /// [`redirector`] handles directing the user to the location of their parsed query, or, if no
@@ -33,11 +41,18 @@ pub async fn redirector(
                 .read()
                 .expect("Shared Config should not be poisoned")
                 .clone(),
+            &params.source_identifier.unwrap_or_default(),
         );
         info!("Redirecting to {resolved} took {:?}", timer.elapsed());
         Either::Left(Redirect::to(resolved.as_str()))
     } else {
-        Either::Right(RenderHtml("/", state.engine, ""))
+        Either::Right(RenderHtml(
+            "/",
+            state.engine,
+            TemplateData {
+                source_identifier: params.source_identifier.unwrap_or_default().into(),
+            },
+        ))
     };
 
     EitherResponse(res)
