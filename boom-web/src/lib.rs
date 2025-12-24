@@ -97,10 +97,6 @@ pub async fn serve(address: IpAddr, port: u16, config: &Config) {
     hbs.register_template_string("/bangs", include_str!("../assets/bangs/index.html"))
         .expect("Template should be syntactically correct");
 
-    #[cfg(feature = "history")]
-    hbs.register_template_string("/history", include_str!("../assets/history/index.html"))
-        .expect("Template should be syntactically correct");
-
     let shared_config = RwLock::from(config.clone());
 
     let state = AppState {
@@ -221,11 +217,6 @@ pub async fn serve(address: IpAddr, port: u16, config: &Config) {
             "/sw.js",
             get(|| async { asset_handler(Path("bangs/sw.js".to_string())).await }),
         );
-
-    #[cfg(feature = "history")]
-    {
-        router = router.route("/history", get(list_history));
-    }
 
     let addr = SocketAddr::new(address, port);
     let listener = match TcpListener::bind(addr).await {
