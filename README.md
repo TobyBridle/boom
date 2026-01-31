@@ -1,9 +1,19 @@
-
 ![boom logo](https://github.com/user-attachments/assets/61e33a4d-c937-4451-aa81-a2c4cbad3b18)
 
-# Boom
+## About
 
 A lightweight and high-speed server for processing [DuckDuckGo Bangs](https://duckduckgo/bang.js).
+
+#### Features
+
+- **Bangs**
+  - **DuckDuckGo-style bangs, imported from DuckDuckGo themselves**
+  - **User-defined bangs with capability to override imported ones**
+- **OpenSearch support**
+- **Search suggestions**
+  - **External Suggestions**
+  - **Suggestions using Boom history (optional)**
+- **Search history persistence (optional)**
 
 <table>
 <th>
