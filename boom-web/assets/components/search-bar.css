@@ -1,0 +1,116 @@
+/**
+  
+  
+   $$$$$$\ $$\   $$\ $$$$$$$$\  $$$$$$\      
+   \_$$  _|$$$\  $$ |$$  _____|$$  __$$\     
+   $$ |  $$$$\ $$ |$$ |      $$ /  $$ |$$\ 
+   $$ |  $$ $$\$$ |$$$$$\    $$ |  $$ |\__|
+   $$ |  $$ \$$$$ |$$  __|   $$ |  $$ |    
+   $$ |  $$ |\$$$ |$$ |      $$ |  $$ |$$\ 
+   $$$$$$\ $$ | \$$ |$$ |       $$$$$$  |\__|
+   \______|\__|  \__|\__|       \______/     
+   
+  
+ This assumes the following HTML:
+
+ <div class="boom-search">
+  <input type="text" name="search" placeholder="..." />
+  <label for="search">
+    <i class="nf nf-fa-magnifying_glass"></i>
+  </label>
+ </div>
+
+ */
+
+/*
+ Backup incase the webpage does not import.
+ Not recommended to rely on due to significantly impacting page render speed
+*/
+@import "https://www.nerdfonts.com/assets/css/webfont.css";
+
+.boom-palette {
+  --base00: #161616;
+  --base01: #262626;
+  --base02: #393939;
+  --base03: #525252;
+  --base04: #dde1e6;
+  --base05: #f2f4f8;
+  --base06: #ffffff;
+  --base07: #08bdba;
+  --base08: #3ddbd9;
+  --base09: #78a9ff;
+  --base0A: #ee5396;
+  --base0B: #33b1ff;
+  --base0C: #ff7eb6;
+  --base0D: #42be65;
+  --base0E: #be95ff;
+  --base0F: #82cfff;
+}
+
+.boom-search {
+  --padding: 16px;
+  --width: 30%;
+  --min-width: 342px;
+  --max-width: 512px;
+
+  /**
+   =====================
+  */
+
+  background: var(--base01);
+  outline: 1px solid var(--base03);
+
+  font-family: monospace;
+  font-size: 14px;
+  color: var(--base03);
+
+  width: var(--width);
+  min-width: var(--min-width);
+  max-width: var(--max-width);
+
+  display: flex;
+  align-content: center;
+  justify-content: space-between;
+
+  & input {
+    all: unset;
+
+    padding: var(--padding);
+
+    pointer-events: all;
+    cursor: pointer;
+
+    border: 0;
+    outline: 0;
+    background-color: transparent;
+
+    font: inherit;
+    color: var(--base05);
+
+    flex-grow: 1;
+
+    &::placeholder {
+      color: var(--base03);
+    }
+
+    & label {
+      pointer-events: none;
+    }
+
+    & label i {
+      font-family: "NerdFontsSymbols Nerd Font";
+    }
+
+    &:not(:placeholder-shown) {
+      & + label {
+        display: none;
+      }
+    }
+  }
+
+  & label {
+    padding: var(--padding);
+    display: grid;
+    place-items: center;
+  }
+}

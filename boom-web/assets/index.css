@@ -1,4 +1,8 @@
 .container {
+  position: absolute;
+  top: 0;
+  left: 0;
+
   width: 100vw;
   height: 100vh;
 
@@ -11,6 +15,7 @@ img {
   grid-row: icon;
   aspect-ratio: 1/1;
   height: 100%;
+  max-width: 100%;
 }
 
 form {
@@ -38,37 +43,6 @@ form {
   &:has(input:active) {
     outline: 2px solid #be95ff80;
   }
-}
-
-input[name="q"] {
-  flex: 1;
-
-  background-color: inherit;
-  color: #f2f4f8;
-  border: none;
-
-  padding-left: 2rem;
-
-  caret-color: #be95ff;
-
-  &:active,
-  &:focus {
-    outline: none;
-  }
-
-  &::placeholder {
-    font-weight: 600 !important;
-  }
-}
-
-label[for="q"] {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  padding-right: 0.5rem;
-
-  color: rgba(242, 244, 248, 0.4);
-  background: transparent;
 }
 
 footer {
@@ -174,6 +148,7 @@ footer {
 
 @media (max-width: 800px) {
   .cards-container {
+    margin-top: 64px;
     flex-direction: column;
     align-items: center;
   }

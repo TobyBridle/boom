@@ -7,6 +7,16 @@
     <link rel="stylesheet" type="text/css" href="/assets/layout.css" />
     <link rel="stylesheet" type="text/css" href="/assets/index.css" />
     <link
+      rel="stylesheet"
+      type="text/css"
+      href="/assets/components/search-bar.css"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="/assets/components/search-bar.css"
+    />
+    <link
       rel="apple-touch-icon"
       sizes="180x180"
       href="/assets/apple-touch-icon.png"
@@ -33,9 +43,15 @@
     <script type="module" src="/assets/index.js"></script>
   </head>
   <body>
-    <div class="container">
+    <div class="container boom-palette">
       <img src="/assets/icon-transparent.png" alt="Boom Icon" />
-      <form role="search" type="GET" action="/">
+      <form
+        role="search"
+        type="GET"
+        action="/"
+        class="boom-search"
+        data-width="100%"
+      >
         <input
           type="text"
           name="q"
