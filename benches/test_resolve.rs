@@ -10,10 +10,10 @@ use boom_core::{
 fn main() {
     let bangs = parse_bang_file(&{
         let mut d = env::current_dir().unwrap();
-        d.push("default_bangs.json");
+        d.push("bangs.json");
         d
     })
-    .unwrap();
+    .expect("bangs.json should be present in the CWD!");
     bangs.iter().enumerate().for_each(|(idx, bang)| {
         insert_bang(bang.trigger.clone(), idx).unwrap();
     });
