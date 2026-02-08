@@ -2,6 +2,11 @@
 <html>
   <head>
     <link rel="stylesheet" type="text/css" href="/assets/layout.css" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="/assets/components/search-bar.css"
+    />
     <link rel="stylesheet" type="text/css" href="/assets/bangs/style.css" />
     <link
       rel="apple-touch-icon"
@@ -30,12 +35,13 @@
   </head>
   <body>
     <nav>
-      <div class="bang-search">
+      <div class="boom-palette boom-search">
         <input
           type="text"
           id="filterInput"
-          placeholder="SEARCH BANGS"
           name="bang-search"
+          placeholder="Search Bangs"
+          minlength="1"
         />
         <label for="bang-search">
           <svg
