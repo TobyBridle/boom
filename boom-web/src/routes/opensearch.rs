@@ -16,6 +16,10 @@ pub async fn opensearch(
         .shared_config
         .try_read()
         .expect("Shared Config should not be poisoned");
+
+    let addr = std::env::var("OPENSEARCH_ADDRESS").unwrap_or(cfg.server.address.to_string());
+    let port = std::env::var("OPENSEARCH_PORT").unwrap_or(cfg.server.port.to_string());
+
     Response::builder()
         .header(CONTENT_TYPE, "application/xml")
         .body(format!(
@@ -34,7 +38,7 @@ r#"
   type="application/opensearchdescription+xml"
   rel="self"
   template="http{is_secure}://{address}:{port}/opensearch.xml&amp;si={source_identifier}" />
-</OpenSearchDescription>"#, is_secure = if cfg.server.is_secure { "s"} else {""}, address = cfg.server.address, port = cfg.server.port, source_identifier = Into::<String>::into(params.source_identifier.unwrap_or_default())
+</OpenSearchDescription>"#, is_secure = if cfg.server.is_secure { "s"} else {""}, address = addr, port = port, source_identifier = Into::<String>::into(params.source_identifier.unwrap_or_default())
     ))
         .unwrap()
 }
