@@ -57,7 +57,6 @@ pub struct ServerConfig {
     pub address: IpAddr,
     pub port: u16,
     pub wait_for_internet: bool,
-    pub is_secure: bool,
     pub search_suggestions: String,
 }
 
@@ -67,7 +66,6 @@ impl Default for ServerConfig {
             address: IpAddr::V4(Ipv4Addr::LOCALHOST),
             port: 3000,
             wait_for_internet: false,
-            is_secure: false,
             search_suggestions: "https://search.brave.com/api/suggest?q={searchTerms}".to_string(),
         }
     }
@@ -148,8 +146,6 @@ pub struct ServerConfigBuilder {
     #[merge(strategy = merge::option::overwrite_none)]
     pub wait_for_internet: Option<bool>,
     #[merge(strategy = merge::option::overwrite_none)]
-    pub is_secure: Option<bool>,
-    #[merge(strategy = merge::option::overwrite_none)]
     pub search_suggestions: Option<String>,
 }
 
@@ -221,11 +217,6 @@ impl ConfigBuilder {
         self
     }
 
-    pub fn secure(&mut self) -> &mut Self {
-        self.server.get_or_insert_default().is_secure = Some(true);
-        self
-    }
-
     pub fn set_default_template<S: Into<String>>(&mut self, template: S) -> &mut Self {
         self.bangs.get_or_insert_default().default_search_template = Some(template.into());
         self
@@ -264,7 +255,6 @@ impl From<ServerConfig> for ServerConfigBuilder {
             address: Some(config.address),
             port: Some(config.port),
             wait_for_internet: Some(config.wait_for_internet),
-            is_secure: Some(config.is_secure),
             search_suggestions: Some(config.search_suggestions),
         }
     }
@@ -279,7 +269,6 @@ impl From<ServerConfigBuilder> for ServerConfig {
                 .unwrap_or(default.wait_for_internet),
             address: builder.address.unwrap_or(default.address),
             port: builder.port.unwrap_or(default.port),
-            is_secure: builder.is_secure.unwrap_or(default.is_secure),
             search_suggestions: builder
                 .search_suggestions
                 .unwrap_or(default.search_suggestions),

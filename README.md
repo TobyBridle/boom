@@ -1,5 +1,23 @@
 ![boom logo](https://github.com/user-attachments/assets/61e33a4d-c937-4451-aa81-a2c4cbad3b18)
 
+<!--toc:start-->
+
+- [Usage/Examples](#usageexamples)
+  - [Common Examples](#common-examples)
+  - [Config Validation](#config-validation)
+  - [Bang Resolution](#bang-resolution)
+- [Configuration](#configuration)
+  - [Customising Bangs using External Sources](#customising-bangs-using-external-sources)
+  - [Customising Bangs within the Config](#customising-bangs-within-the-config)
+  - [Default Configuration](#default-configuration)
+- [Run Locally](#run-locally)
+- [Hosting](#hosting)
+  - [Building/Installing](#buildinginstalling)
+  - [Testing](#testing)
+- [Acknowledgements](#acknowledgements)
+- [License](#license)
+<!--toc:end-->
+
 ## About
 
 A lightweight and high-speed server for processing [DuckDuckGo Bangs](https://duckduckgo/bang.js).
@@ -166,8 +184,9 @@ address = "127.0.0.1"
 port = 3000
 # Wait for the internet connection to be valid before attempting to serve
 wait_for_internet = false
-# Whether or not to use SSL; primarily just for http/https in boom-web
-is_secure = false # Must be false on 127.0.0.1
+# Search suggestions url, with `{searchTerms}` as the template for any queries
+# Suggestion endpoint must have a response structured as demonstrated within https://github.com/dewitt/opensearch/blob/master/opensearch-1-1-draft-6.md#opensearch-11-parameters
+search_suggestions = "https://search.brave.com/api/suggest?q={searchTerms}"
 
 [bangs]
 # The entirety of `{{{s}}}` will be replaced with the search term
@@ -234,6 +253,23 @@ cargo bench
 # Benchmarks w/ SIMD
 RUSTFLAGS="-C target-feature=+avx2 -Zcrate-attr=feature(stdarch_x86_avx512)" cargo bench
 ```
+
+## Hosting
+
+If using a reverse proxy, ensure `boom` has access to the Host and X-Forwarded-Proto headers.
+<br/>
+For example, your nginx config may include something like:
+
+```conf
+location / {
+  proxy_pass http://127.0.0.1:8080; # your boom instance here
+  proxy_set_header host $host;
+  proxy_set_header x-forwarded-proto $scheme
+}
+```
+
+If `boom` doesn't have access to these, the OpenSearch functionality may not work as intended.
+
 ## Acknowledgements
 The reason `boom` was ever created is due to the likes of two awesome people.\
 Check out their implementations below:

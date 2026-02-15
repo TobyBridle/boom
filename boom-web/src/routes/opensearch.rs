@@ -1,8 +1,11 @@
 use axum::{
     extract::{Query, State},
-    http::header::CONTENT_TYPE,
+    http::{HeaderMap, header::CONTENT_TYPE},
     response::Response,
 };
+use mime_guess::mime::APPLICATION_JSON;
+use reqwest::header::HOST;
+use serde_json::json;
 
 use crate::{AppState, routes::index::SearchParams};
 
@@ -11,14 +14,32 @@ use crate::{AppState, routes::index::SearchParams};
 pub async fn opensearch(
     State(state): State<AppState>,
     Query(params): Query<SearchParams>,
+    headers: HeaderMap,
 ) -> Response<String> {
     let cfg = state
         .shared_config
         .try_read()
         .expect("Shared Config should not be poisoned");
 
-    let addr = std::env::var("OPENSEARCH_ADDRESS").unwrap_or(cfg.server.address.to_string());
-    let port = std::env::var("OPENSEARCH_PORT").unwrap_or(cfg.server.port.to_string());
+    let host = headers.get(HOST).map_or_else(
+        || format!("{}:{}", cfg.server.address, cfg.server.port),
+        |h| h.to_str().unwrap_or("").to_string(),
+    );
+
+    let scheme = headers
+        .get("scheme")
+        .map_or_else(|| "http", |h| h.to_str().unwrap_or("http"));
+
+    if host.trim().is_empty() {
+        let body = json!({
+            "message": "Unexpected host. Why on earth did that happen?"
+        })
+        .to_string();
+        return Response::builder()
+            .header(CONTENT_TYPE, APPLICATION_JSON.to_string())
+            .body(body)
+            .unwrap();
+    }
 
     Response::builder()
         .header(CONTENT_TYPE, "application/xml")
@@ -32,13 +53,13 @@ r#"
   <InputEncoding>UTF-8</InputEncoding>
   <Image width="16" height="16" type="image/x-icon">{ICON_ICO}</Image>
   <Image width="32" height="32" type="image/png">{ICON_32}</Image>
-  <Url type="text/html" template="http{is_secure}://{address}:{port}/?q={{searchTerms}}&amp;si={source_identifier}" />
-  <Url type="application/x-suggestions+json" method="GET" template="http{is_secure}://{address}:{port}/suggest?q={{searchTerms}}&amp;si={source_identifier}" />
+  <Url type="text/html" template="{scheme}://{host}/?q={{searchTerms}}&amp;si={source_identifier}" />
+  <Url type="application/x-suggestions+json" method="GET" template="{scheme}://{host}/suggest?q={{searchTerms}}&amp;si={source_identifier}" />
 <Url
   type="application/opensearchdescription+xml"
   rel="self"
-  template="http{is_secure}://{address}:{port}/opensearch.xml&amp;si={source_identifier}" />
-</OpenSearchDescription>"#, is_secure = if cfg.server.is_secure { "s"} else {""}, address = addr, port = port, source_identifier = Into::<String>::into(params.source_identifier.unwrap_or_default())
+  template="{scheme}://{host}/opensearch.xml&amp;si={source_identifier}" />
+</OpenSearchDescription>"#, host = host, source_identifier = Into::<String>::into(params.source_identifier.unwrap_or_default())
     ))
         .unwrap()
 }

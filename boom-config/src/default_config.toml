@@ -3,8 +3,6 @@ address = "127.0.0.1"
 port = 3000
 # Wait for the internet connection to be valid before attempting to serve
 wait_for_internet = false
-# Whether or not to use SSL; primarily just for http/https in boom-web
-is_secure = false # Must be false on 127.0.0.1
 # Search suggestions url, with `{searchTerms}` as the template for any queries
 # Suggestion endpoint must have a response structured as demonstrated within https://github.com/dewitt/opensearch/blob/master/opensearch-1-1-draft-6.md#opensearch-11-parameters
 search_suggestions = "https://search.brave.com/api/suggest?q={searchTerms}"
