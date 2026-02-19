@@ -278,6 +278,20 @@ pub async fn serve(address: IpAddr, port: u16, config: &Config) {
             get(|| async { asset_handler(Path("bangs/sw.js".to_string())).await }),
         );
 
+    #[cfg(feature = "history")]
+    {
+        router = router.route("/history", get(list_history));
+    }
+
+    #[cfg(feature = "api")]
+    {
+        use crate::routes::api::add_bang::add_bang;
+        use axum::routing::post;
+        router = router
+            .route("/api", get(|| async { StatusCode::OK }))
+            .route("/api/add_bang", post(add_bang));
+    }
+
     let addr = SocketAddr::new(address, port);
     let listener = match TcpListener::bind(addr).await {
         Ok(listener) => listener,

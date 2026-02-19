@@ -28,3 +28,4 @@ parquet = { workspace = true, optional = true }
 [features]
 history = ["dep:parquet"]
 history-suggestions = ["history"]
+api = []

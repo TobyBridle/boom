@@ -1,3 +1,5 @@
+#[cfg(feature = "api")]
+pub mod api;
 pub mod bangs;
 #[cfg(feature = "history")]
 pub mod history;

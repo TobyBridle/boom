@@ -46,6 +46,7 @@ parquet.workspace = true
 default = ["history"]
 history = ["boom-core/history", "boom-web/history"]
 history-suggestions = ["history", "boom-web/history-suggestions"]
+api = ["boom-web/api"]
 measure-allocs = []
 
 [dev-dependencies]
