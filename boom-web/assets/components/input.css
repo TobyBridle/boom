@@ -13,7 +13,7 @@
   
  This assumes the following HTML:
 
- <div class="boom-search">
+ <div class="boom-input">
   <input type="text" name="search" placeholder="..." />
   <label for="search">
     <i class="nf nf-fa-magnifying_glass"></i>
@@ -47,11 +47,12 @@
   --base0F: #82cfff;
 }
 
-.boom-search {
+.boom-input {
   --padding: 16px;
   --width: 30%;
   --min-width: 342px;
   --max-width: 512px;
+  --radius: 4px;
 
   /**
    =====================
@@ -67,10 +68,13 @@
   width: var(--width);
   min-width: var(--min-width);
   max-width: var(--max-width);
+  height: fit-content;
 
   display: flex;
   align-content: center;
   justify-content: space-between;
+
+  border-radius: var(--radius);
 
   & input {
     all: unset;
@@ -101,16 +105,83 @@
       font-family: "NerdFontsSymbols Nerd Font";
     }
 
-    &:not(:placeholder-shown) {
+    &:is([type="text"], [type="password"], [type="url"], [type="search"], ):not(
+        :placeholder-shown
+      ) {
       & + label {
         display: none;
       }
     }
   }
 
+  &:has(input:focus) {
+    outline: 2px solid rgba(from var(--base0E) r g b / 50%);
+    transition: outline 100ms ease-in-out;
+  }
+
+  &:has(input:active) {
+    outline: 2px solid #be95ff80;
+  }
+
   & label {
     padding: var(--padding);
     display: grid;
     place-items: center;
+  }
+}
+
+.boom-input:has(> input[type="checkbox"]) {
+  --unchecked-color: var(--base03);
+  --checked-color: var(--base08);
+  all: unset;
+
+  background: transparent;
+
+  color: var(--unchecked-color);
+
+  min-width: unset;
+  width: fit-content;
+  position: relative;
+
+  display: flex;
+  justify-content: left;
+
+  & label {
+    min-width: max-content;
+  }
+
+  &:has(> input[type="checkbox"]:checked) {
+    color: var(--checked-color);
+  }
+
+  & input[type="checkbox"] {
+    display: none;
+  }
+
+  &:has(input[type="checkbox"])::before {
+    top: 50%;
+    translate: 0 -50%;
+    position: relative;
+
+    content: "";
+
+    font-family: "NerdFontsSymbols Nerd Font";
+    font-size: 12px;
+    color: var(--checked-color);
+    text-align: center;
+    line-height: 16px;
+
+    width: 16px;
+    height: 16px;
+    aspect-ratio: 1/1;
+    padding: 4px;
+
+    border-radius: var(--radius);
+    box-shadow: 0 0 0 1px var(--unchecked-color);
+  }
+
+  &:has(input[type="checkbox"]:checked)::before {
+    content: "󰄬";
+    box-shadow: 0 0 0 1px var(--checked-color);
   }
 }

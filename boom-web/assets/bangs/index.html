@@ -5,7 +5,7 @@
     <link
       rel="stylesheet"
       type="text/css"
-      href="/assets/components/search-bar.css"
+      href="/assets/components/input.css"
     />
     <link rel="stylesheet" type="text/css" href="/assets/bangs/style.css" />
     <link
@@ -34,8 +34,8 @@
     />
   </head>
   <body>
-    <nav>
-      <div class="boom-palette boom-search">
+    <div class="search-container boom-palette">
+      <div class="boom-input" data-width="100%">
         <input
           type="text"
           id="filterInput"
@@ -68,6 +68,11 @@
       <tbody></tbody>
     </table>
 
+    <script
+      type="text/javascript"
+      src="/assets/components/input.js"
+      defer
+    ></script>
     <script type="application/json" id="bang-data">
       {{{json bangs}}}
     </script>
