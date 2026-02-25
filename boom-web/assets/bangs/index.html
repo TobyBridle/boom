@@ -38,18 +38,80 @@
       <div class="boom-input" data-width="100%">
         <input
           type="text"
-          id="filterInput"
-          name="bang-search"
-          placeholder="Search Bangs"
+          name="query"
+          placeholder="Search Bangs."
           minlength="1"
         />
-        <label for="bang-search">
+        <label for="query">
           <i class="nf nf-fa-magnifying_glass"></i>
         </label>
       </div>
-    </nav>
+      {{ #if api_enabled }}
+      <a href="#" id="add-bang" style="color: var(--base0A)"
+        >Missing a bang? Try adding one!</a
+      >
+      {{ /if }}
+    </div>
+    {{ #if api_enabled }}
+    <form
+      class="add-bang hidden boom-palette"
+      action="/api/add-bang"
+      method="post"
+    >
+      <div class="boom-input">
+        <input type="text" name="s" placeholder="Name (e.g Boom)" required />
+        <label for="s">
+          <!-- <i class="nf nf-fa-magnifying_glass"></i> -->
+        </label>
+      </div>
+      <div class="boom-input">
+        <input type="text" name="t" placeholder="Trigger (e.g  bm)" required />
+        <label for="t">
+          <b>!</b>
+        </label>
+      </div>
+      <div class="boom-input">
+        <input
+          type="url"
+          name="u"
+          placeholder="URL to Redirect (e.g https://bbboom.co.uk)"
+          required
+        />
+        <label for="u">
+          <i class="nf nf-oct-link"></i>
+        </label>
+      </div>
+      <div class="status" data-status="none"></div>
+      <hr />
+      <div class="boom-input">
+        <input type="submit" value="Add Bang" />
+        <label><i class="nf nf-cod-add"></i></label>
+      </div>
+      <div class="filters">
+        <div class="boom-input">
+          <input type="checkbox" name="overwrite" />
+          <label for="overwrite">Overwrite Existing?</label>
+        </div>
+        <div class="boom-input">
+          <input type="checkbox" id="allow_non_url" checked />
+          <label for="allow_non_url">Require Template to be URL</label>
+        </div>
+      </div>
+    </form>
+    {{ /if }}
+    <!-- <div class="boom-palette boom-search"> -->
+    <!--   <input -->
+    <!--     type="text" -->
+    <!--     id="filterInput" -->
+    <!--     name="bang-search" -->
+    <!--     placeholder="Search Bangs" -->
+    <!--     minlength="1" -->
+    <!--   /> -->
+    <!--   <label for="bang-search"> -->
+    <!--     <i class="nf nf-fa-magnifying_glass"></i> -->
+    <!--   </label> -->
+    <!-- </div> -->
 
-    <h1 id="all">All {{len bangs}} Bang(s)</h1>
     <div id="all-pagination">
       <button id="prev">&lt;</button>
       <span id="page-info"></span>

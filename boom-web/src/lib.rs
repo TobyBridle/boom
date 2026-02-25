@@ -289,7 +289,7 @@ pub async fn serve(address: IpAddr, port: u16, config: &Config) {
         use axum::routing::post;
         router = router
             .route("/api", get(|| async { StatusCode::OK }))
-            .route("/api/add_bang", post(add_bang));
+            .route("/api/add-bang", post(add_bang));
     }
 
     let addr = SocketAddr::new(address, port);

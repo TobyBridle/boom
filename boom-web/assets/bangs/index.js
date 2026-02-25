@@ -140,7 +140,7 @@ window.onload = () => {
    * @type {HTMLInputElement|undefined}
    */
   const input = /** @type {HTMLInputElement|undefined}*/ (
-    document.querySelector("input[name='bang-search']")
+    document.querySelector("input[name='query']")
   );
 
   _urlQuery != null && input && (input.value = _urlQuery);
@@ -162,6 +162,22 @@ window.onload = () => {
       loadBangs(active_filter_fn);
     }
   }) ?? console.warn("Could not add event listener to search input");
+
+  const addBang = document.querySelector("a#add-bang");
+  // Functionality is locked behind a feature, the existence of this button isn't guaranteed
+  if (addBang) {
+    addBang.addEventListener("click", toggleAddBang);
+
+    const urlTemplateInput = /** @type {HTMLInputElement} **/ (
+      document.querySelector("input[name='u']")
+    );
+    const requireBangUrl = /** @type {HTMLInputElement} **/ (
+      document.querySelector("input#allow_non_url")
+    );
+    requireBangUrl?.addEventListener("change", () => {
+      urlTemplateInput.type = requireBangUrl.checked ? "url" : "text";
+    });
+  }
 };
 
 window.onpopstate =
@@ -442,6 +458,42 @@ function crossfadeImage(wrapper, imageEl, nextUrl, duration = 1000) {
         resolve(next);
       },
       { once: true },
+    );
+  });
+}
+
+function toggleAddBang() {
+  const formStatus = /** @type {HTMLElement} **/ (
+    document.querySelector("form .status")
+  );
+  formStatus.dataset["status"] = "none";
+
+  const bangSection = /** @type {HTMLFormElement} **/ (
+    document.querySelector("form.add-bang")
+  );
+  if (!bangSection) return;
+
+  bangSection.classList.toggle("hidden");
+  bangSection.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const parsed = [...new FormData(bangSection).entries()].reduce(
+      (prevEntry, currEntry) => {
+        prevEntry[`${currEntry[0]}`] = currEntry[1];
+        return prevEntry;
+      },
+      {},
+    );
+    fetch("/api/add-bang", {
+      body: JSON.stringify(parsed),
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }).then(
+      (r) =>
+        (formStatus.dataset["status"] =
+          r.status === 201 ? "success" : "conflict"),
     );
   });
 }
