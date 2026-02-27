@@ -102,15 +102,14 @@ fn register_templates(hbs: &mut Handlebars) {
 /// If signal listeners cannot be created.
 ///
 /// # Example
-/// ```
+/// ```rust.no_run
 /// use std::time::Duration;
-/// use boom_core::history::watch_history;
-///
+/// use boom_web::watch_history;
 ///
 /// // Save history every 30 seconds
 /// watch_history(Duration::from_secs(30));
 /// ```
-fn watch_history(period: Duration) {
+pub(crate) fn watch_history(period: Duration) {
     use tokio::signal::unix::{SignalKind, signal};
 
     info!("Saving histfile with period: {period:?}");
@@ -182,16 +181,17 @@ fn watch_history(period: Duration) {
 /// If the file watcher cannot be created or the path cannot be watched.
 ///
 /// # Example
-/// ```
+/// ```rust.no_run
 /// use std::sync::{Arc, RwLock};
-/// use boom_core::config::{Config, watch_config};
+/// use boom_web::watch_config;
+/// use boom_config::Config;
 ///
 /// let cfg = Config::default();
 /// let shared_config = Arc::new(RwLock::new(cfg));
 ///
 /// watch_config(shared_config.clone());
 /// // Continue running the rest of the application...
-fn watch_config(shared_config: Arc<RwLock<Config>>) {
+pub fn watch_config(shared_config: Arc<RwLock<Config>>) {
     // NOTE: Hot-reloading only works using the default config path!
 
     tokio::spawn(async move {
