@@ -42,14 +42,14 @@ mod test {
         assert_eq!(
             parsed_config.bangs.custom.get("boomdev"),
             Some(&BangCustomConfig {
-                trigger: "boomdev".to_string(),
+                short_name: "boomdev".to_string(),
                 template: "https://github.com/tobybridle/boom".to_string(),
             })
         );
         assert_eq!(
-            parsed_config.bangs.custom.get("amazingdev"),
+            parsed_config.bangs.custom.get("amazedev"),
             Some(&BangCustomConfig {
-                trigger: "amazedev".to_string(),
+                short_name: "amazingdev".to_string(),
                 template: "https://github.com/tobybridle/{{{s}}}".to_string(),
             })
         )

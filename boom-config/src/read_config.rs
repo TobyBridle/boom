@@ -25,7 +25,10 @@ impl ConfigSource for PathBuf {
                     .data,
             )?;
         }
-        Ok(toml::from_str::<ConfigBuilder>(&fs::read_to_string(self)?)?)
+
+        Ok(toml::de::from_str::<ConfigBuilder>(&fs::read_to_string(
+            self,
+        )?)?)
     }
 
     fn source(&self) -> Option<&PathBuf> {

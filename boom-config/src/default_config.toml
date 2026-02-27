@@ -23,15 +23,15 @@ remote = "https://duckduckgo.com/bang.js"
 # Declaring a bang here is the only way to guarantee that it will be used and not overwritten
 # in a race condition between sources.
 [bangs.custom]
-boomdev = { template = "https://github.com/tobybridle/boom", trigger = "boomdev" }
+boomdev = { template = "https://github.com/tobybridle/boom", short_name = "boomdev" }
 # ^ shortname
 
 # You can also set them like this
-[bangs.custom.amazingdev]
+[bangs.custom.amazedev]
 # `!amazedev boom` resolves to the url for this project!
 template = "https://github.com/tobybridle/{{{s}}}"
-trigger = "amazedev"
+short_name = "amazingdev"
 
-[bangs.custom.boom_bangs]
+[bangs.custom.bangs]
 template = "http://127.0.0.1:3000/bangs"
-trigger = "bangs"
+short_name = "boom_bangs"

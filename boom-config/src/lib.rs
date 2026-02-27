@@ -9,6 +9,7 @@ use std::{
 use merge::Merge;
 use rust_embed::RustEmbed;
 use serde::Deserialize;
+use serde::Serialize;
 use tracing::error;
 pub mod parse_config;
 pub mod read_config;
@@ -120,16 +121,17 @@ impl Display for BangSourceConfig {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct BangCustomConfig {
+    pub short_name: String,
     pub template: String,
-    pub trigger: String,
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Eq, Merge, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Merge, Deserialize, Serialize)]
 pub struct ConfigBuilder {
     #[merge(skip)]
     #[serde(skip_deserializing)]
+    #[serde(skip_serializing)]
     config_source: PathBuf,
     #[merge(strategy = merge::option::overwrite_none)]
     server: Option<ServerConfigBuilder>,
@@ -137,7 +139,7 @@ pub struct ConfigBuilder {
     bangs: Option<BangConfigBuilder>,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Default, Merge, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Clone, Default, Merge, Deserialize, Serialize)]
 pub struct ServerConfigBuilder {
     #[merge(strategy = merge::option::overwrite_none)]
     pub address: Option<IpAddr>,
@@ -149,7 +151,7 @@ pub struct ServerConfigBuilder {
     pub search_suggestions: Option<String>,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Default, Merge, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Clone, Default, Merge, Deserialize, Serialize)]
 pub struct BangConfigBuilder {
     #[merge(strategy = merge::option::overwrite_none)]
     pub default_search_template: Option<String>,
@@ -161,7 +163,7 @@ pub struct BangConfigBuilder {
     pub custom: HashMap<String, BangCustomConfig>,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Default, Merge, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Clone, Default, Merge, Deserialize, Serialize)]
 pub struct BangSourceConfigBuilder {
     #[merge(strategy = merge::option::overwrite_none)]
     pub required: Option<bool>,
@@ -224,13 +226,13 @@ impl ConfigBuilder {
 
     pub fn add_custom_bang<B: Into<String>, C: Into<BangCustomConfig>>(
         &mut self,
-        bang_name: B,
+        bang_trigger: B,
         bang_config: C,
     ) -> &mut Self {
         self.bangs
             .get_or_insert_default()
             .custom
-            .insert(bang_name.into(), bang_config.into());
+            .insert(bang_trigger.into(), bang_config.into());
         self
     }
 
@@ -246,6 +248,15 @@ impl ConfigBuilder {
             server: self.server.unwrap_or_default().into(),
             bangs: self.bangs.unwrap_or_default().into(),
         }
+    }
+
+    /// # Panics
+    /// - `self` can't be serialized back into TOML format
+    /// - [`self::config_source`] is not writeable
+    pub fn serialize(self) {
+        let ser = toml::ser::to_string_pretty(&self).expect("Config should be serializable");
+        std::fs::write(&self.config_source, ser)
+            .unwrap_or_else(|_| panic!("{} should be writeable", self.config_source.display()));
     }
 }
 

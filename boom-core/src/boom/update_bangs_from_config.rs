@@ -35,9 +35,9 @@ pub async fn update_bangs_from_config(
     let custom_bangs = config_bangs
         .custom
         .iter()
-        .map(|(short_name, custom)| Redirect {
-            short_name: short_name.clone(),
-            trigger: custom.trigger.clone(),
+        .map(|(trigger, custom)| Redirect {
+            short_name: custom.short_name.clone(),
+            trigger: trigger.clone(),
             url_template: custom.template.clone(),
         });
 

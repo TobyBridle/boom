@@ -4,8 +4,6 @@ use std::{
     sync::{LazyLock, RwLock, RwLockReadGuard},
 };
 
-use tracing::info;
-
 #[cfg(feature = "history")]
 use crate::HistoryEntry;
 use crate::Redirect;
@@ -120,7 +118,6 @@ pub fn update_redirect(redirect: &Redirect) -> Result<(), Box<dyn std::error::Er
         .map_err(|e| format!("RwLock poisoned: {e}"))?;
 
     if let Some(idx) = get_bang(&redirect.trigger)? {
-        info!("Replacing `!{}` in cache", redirect.trigger);
         write_lock[idx] = redirect.clone();
     } else {
         write_lock.push(redirect.clone());
