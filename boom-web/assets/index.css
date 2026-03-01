@@ -6,20 +6,27 @@
   width: 100vw;
   height: 100vh;
 
-  display: grid;
-  grid-template-rows: [icon] 3fr [search-form] 1fr [footer] 4fr;
-  justify-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 img {
-  grid-row: icon;
+  flex: 1;
+
   aspect-ratio: 1/1;
-  height: 100%;
   max-width: 100%;
+  max-height: 35vh;
+  min-width: 50%;
+  min-height: 160px;
+
+  margin-top: auto;
+  object-fit: contain;
 }
 
 form {
-  grid-row: search-form;
+  flex-shrink: 0;
+
   height: 4rem;
   width: clamp(40rem, 30%, 160rem);
 
@@ -27,7 +34,6 @@ form {
 
   --radius: 4px;
   border-radius: var(--radius);
-
   margin: 1rem 2rem;
 
   overflow: hidden;
@@ -46,7 +52,14 @@ form {
 }
 
 footer {
-  grid-row: footer;
+  flex: 1;
+  width: 100%;
+
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+
+  padding-top: clamp(1rem, 5vh, 10rem);
 }
 
 .cards-container {
@@ -54,8 +67,12 @@ footer {
   flex-wrap: nowrap;
   gap: 2rem;
   justify-content: center;
+
   max-width: 1200px;
   width: 100%;
+  padding: 0 2rem;
+  box-sizing: border-box;
+
   transition: all 0.3s ease;
 }
 
@@ -63,9 +80,11 @@ footer {
   background-color: #262626;
   border-radius: 8px;
   padding: 1.5rem;
+
   max-width: 400px;
   min-width: 300px;
   flex: 1;
+
   transition: all 0.2s ease;
 
   &:hover {
@@ -85,11 +104,14 @@ footer {
 .card-icon {
   width: 48px;
   height: 48px;
+
   background-color: #ee5396;
   border-radius: 6px;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
   font-size: 1.5rem;
   color: #ffffff;
   flex-shrink: 0;
@@ -118,15 +140,17 @@ footer {
 /* Simplified help content styling */
 .help-content {
   background-color: #393939;
+  border-radius: 6px;
+
   padding: 1rem;
   padding-top: 0.25rem;
-  border-radius: 6px;
   margin: 1rem 0;
 }
 
 .help-content pre {
   background-color: #161616;
   color: #33b1ff;
+
   padding: 0.5rem;
   border-radius: 4px;
   font-family: monospace;
@@ -148,7 +172,6 @@ footer {
 
 @media (max-width: 800px) {
   .cards-container {
-    margin-top: 64px;
     flex-direction: column;
     align-items: center;
   }
